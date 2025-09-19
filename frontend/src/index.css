@@ -1,0 +1,23 @@
+/* Reset and ensure full height */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* App container flex layout */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main content fills available space */
+.app-container main {
+  flex: 1;
+}
+
+/* Footer stays at bottom */
+.app-container footer {
+  margin-top: auto;
+}
