@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Filter, Grid, List, ChevronDown, Search, SlidersHorizontal, ArrowLeft, Star, Heart, ShoppingBag, Sparkles } from 'lucide-react';
+import { Filter, Grid, List, ChevronDown, Search, SlidersHorizontal, ArrowLeft, Star, Heart, ShoppingBag, Sparkles, X } from 'lucide-react';
 
 const API_BASE_URL = "http://localhost:8000/api/v1";
 
@@ -21,9 +21,21 @@ export default function CategoryPage() {
     rating: 0
   });
 
-  // Mobile detection
-  const isMobile = window.innerWidth < 768;
-  const cardWidth = isMobile ? 160 : 280;
+  // Mobile detection with window resize handler
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const cardWidth = isMobile ? Math.min(windowWidth * 0.44, 160) : 280;
 
   useEffect(() => {
     setLoading(true);
@@ -47,7 +59,6 @@ export default function CategoryPage() {
             title: product.name,
             price: product.price,
             originalPrice: product.original_price || (product.price + Math.floor(Math.random() * 500) + 200),
-            // ✅ FIXED: Use ImgBB URLs directly without concatenation
             images: product.images && product.images.length > 0 ? 
               product.images : 
               [`https://images.unsplash.com/photo-${1520000000000 + i}?w=400&h=400&fit=crop&auto=format&q=80`],
@@ -63,7 +74,6 @@ export default function CategoryPage() {
             inStock: Math.random() > 0.1,
             brand: product.brand || 'BOLT FIT'
           }));
-
 
           setProducts(transformedProducts);
           setFilteredProducts(transformedProducts);
@@ -157,731 +167,864 @@ export default function CategoryPage() {
     { value: 'newest', label: 'Newest First' }
   ];
 
-  // Advanced Product Card Component
+  // Classic Professional Product Card Component
   const ProductCard = ({ product, index }) => (
     <div
       key={product.id}
       style={{
         width: cardWidth,
-        background: 'linear-gradient(145deg, #ffffff, #f8fafc)',
-        borderRadius: '24px',
-        boxShadow: '0 4px 20px rgba(79, 172, 254, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)',
-        border: '1px solid rgba(79, 172, 254, 0.1)',
+        background: '#ffffff',
+        borderRadius: '8px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        border: '1px solid #e5e7eb',
         overflow: 'hidden',
-        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        transition: 'all 0.3s ease',
         cursor: 'pointer',
         position: 'relative',
-        animationDelay: `${index * 150}ms`,
-        opacity: 0,
-        animation: 'slideInUp 0.8s ease-out forwards',
-        margin: isMobile ? '8px' : '12px',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)'
+        margin: isMobile ? '4px' : '8px',
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
-        e.currentTarget.style.boxShadow = '0 20px 40px rgba(79, 172, 254, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1)';
+        if (!isMobile) {
+          e.currentTarget.style.transform = 'translateY(-4px)';
+          e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+          e.currentTarget.style.borderColor = '#d1d5db';
+        }
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0) scale(1)';
-        e.currentTarget.style.boxShadow = '0 4px 20px rgba(79, 172, 254, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05)';
+        if (!isMobile) {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+          e.currentTarget.style.borderColor = '#e5e7eb';
+        }
       }}
       onClick={() => navigate(`/product/${product.id}`)}
     >
-      {/* Floating Animation Particles */}
-      <div style={{
-        cursor: 'pointer',
-        position: 'absolute',
-        top: '15px',
-        right: '15px',
-        width: '8px',
-        height: '8px',
-        background: 'linear-gradient(135deg, #4facfe, #00f2fe)',
-        borderRadius: '50%',
-        animation: 'float 4s ease-in-out infinite',
-        opacity: 0.6
-      }} />
-      
-      <div style={{
-        position: 'absolute',
-        top: '30px',
-        right: '25px',
-        width: '6px',
-        height: '6px',
-        background: 'linear-gradient(135deg, #ffecd2, #fcb69f)',
-        borderRadius: '50%',
-        animation: 'float 3s ease-in-out infinite 0.5s',
-        opacity: 0.7
-      }} />
-
-      {/* Image Container with Advanced Effects */}
+      {/* Image Container */}
       <div style={{
         position: 'relative',
         overflow: 'hidden',
-        borderRadius: '20px 20px 0 0',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        backgroundColor: '#f8fafc'
       }}>
-        {/* Shimmer Loading Effect */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: '-100%',
-          width: '100%',
-          height: '100%',
-          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
-          animation: 'shimmer 3s infinite',
-          zIndex: 1
-        }} />
-        
         <img
           src={product.images[0]}
           alt={product.title}
           style={{
             width: '100%',
-            height: isMobile ? '140px' : '200px',
+            height: isMobile ? '200px' : '280px',
             objectFit: 'cover',
-            transition: 'transform 0.6s ease, filter 0.3s ease',
-            filter: 'brightness(1.05) saturate(1.1)'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.transform = 'scale(1.1) rotate(1deg)';
-            e.target.style.filter = 'brightness(1.15) saturate(1.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = 'scale(1) rotate(0deg)';
-            e.target.style.filter = 'brightness(1.05) saturate(1.1)';
+            transition: 'transform 0.3s ease'
           }}
           loading="lazy"
+          onMouseEnter={(e) => {
+            if (!isMobile) {
+              e.target.style.transform = 'scale(1.05)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isMobile) {
+              e.target.style.transform = 'scale(1)';
+            }
+          }}
         />
         
-        {/* Advanced Badges */}
+        {/* Classic Discount Badge */}
         {product.discount > 0 && (
           <div style={{
             position: 'absolute',
             top: '12px',
             left: '12px',
-            background: 'linear-gradient(135deg, #ff6b6b, #ee5a52)',
+            background: '#dc2626',
             color: '#ffffff',
-            padding: '6px 12px',
-            borderRadius: '20px',
+            padding: isMobile ? '4px 8px' : '6px 10px',
+            borderRadius: '4px',
             fontSize: isMobile ? '10px' : '12px',
-            fontWeight: '700',
-            animation: 'bounce 2s infinite',
-            boxShadow: '0 4px 15px rgba(255, 107, 107, 0.4)',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)'
+            fontWeight: '600',
+            letterSpacing: '0.5px'
           }}>
-            <Sparkles size={10} style={{ marginRight: 4, display: 'inline' }} />
             -{product.discount}%
           </div>
         )}
         
+        {/* Professional Trending Badge */}
         {product.isTrending && (
           <div style={{
             position: 'absolute',
             top: '12px',
             right: '12px',
-            background: 'linear-gradient(135deg, #ffeaa7, #fdcb6e)',
-            color: '#2d3436',
-            padding: '6px 12px',
-            borderRadius: '20px',
-            fontSize: isMobile ? '10px' : '12px',
-            fontWeight: '700',
-            animation: 'glow 2s ease-in-out infinite alternate',
-            boxShadow: '0 4px 15px rgba(253, 203, 110, 0.4)'
+            background: '#059669',
+            color: '#ffffff',
+            padding: isMobile ? '4px 8px' : '6px 10px',
+            borderRadius: '4px',
+            fontSize: isMobile ? '9px' : '11px',
+            fontWeight: '600',
+            letterSpacing: '0.5px'
           }}>
-            🔥 Trending
+            TRENDING
           </div>
         )}
         
-        {/* Interactive Heart Button */}
-        <button style={{
-          position: 'absolute',
-          bottom: '12px',
-          right: '12px',
-          padding: '10px',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.9)',
-          border: 'none',
-          cursor: 'pointer',
-          opacity: 0,
-          transition: 'all 0.4s ease',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          transform: 'scale(0.8)'
-        }}
-        onMouseEnter={(e) => {
-          e.stopPropagation();
-          e.target.style.transform = 'scale(1.1)';
-          e.target.style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a52)';
-          e.target.querySelector('svg').style.color = '#ffffff';
-          e.target.style.opacity = '1';
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.transform = 'scale(0.8)';
-          e.target.style.background = 'rgba(255, 255, 255, 0.9)';
-          e.target.querySelector('svg').style.color = '#6b7280';
-          e.target.style.opacity = '0';
-        }}>
-          <Heart style={{ width: '16px', height: '16px', color: '#6b7280', transition: 'color 0.3s ease' }} />
-        </button>
+        {/* Wishlist Button */}
+        {!isMobile && (
+          <button style={{
+            position: 'absolute',
+            bottom: '12px',
+            right: '12px',
+            padding: '8px',
+            borderRadius: '4px',
+            background: 'rgba(255, 255, 255, 0.95)',
+            border: '1px solid #e5e7eb',
+            cursor: 'pointer',
+            opacity: 0,
+            transition: 'all 0.3s ease',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}
+          onMouseEnter={(e) => {
+            e.stopPropagation();
+            e.target.style.background = '#f3f4f6';
+            e.target.style.opacity = '1';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'rgba(255, 255, 255, 0.95)';
+            e.target.style.opacity = '0';
+          }}>
+            <Heart style={{ width: '16px', height: '16px', color: '#6b7280' }} />
+          </button>
+        )}
       </div>
       
-      {/* Enhanced Content Section */}
+      {/* Content Section */}
       <div style={{
-        padding: isMobile ? '16px' : '20px',
-        background: 'linear-gradient(145deg, #ffffff, #f8fafc)'
+        padding: isMobile ? '14px' : '18px',
+        background: '#ffffff'
       }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '8px'
-        }}>
-          <div style={{
-            padding: '4px 8px',
-            background: 'linear-gradient(135deg, #a8edea, #fed6e3)',
-            borderRadius: '12px',
-            fontSize: isMobile ? '9px' : '10px',
-            fontWeight: '600',
-            color: '#2d3436',
-            marginRight: '8px'
-          }}>
-            {product.brand}
-          </div>
-          <div style={{
-            padding: '4px 8px',
-            background: 'linear-gradient(135deg, #d299c2, #fef9d7)',
-            borderRadius: '12px',
-            fontSize: isMobile ? '9px' : '10px',
-            fontWeight: '600',
-            color: '#2d3436'
-          }}>
-            {product.category}
-          </div>
-        </div>
-
+        {/* Title */}
         <h3 style={{
-          fontWeight: '700',
-          fontSize: isMobile ? '14px' : '18px',
-          background: 'linear-gradient(135deg, #667eea, #764ba2)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          marginBottom: '10px',
-          transition: 'all 0.3s ease',
+          fontWeight: '600',
+          fontSize: isMobile ? '14px' : '16px',
+          color: '#1f2937',
+          marginBottom: '8px',
           display: '-webkit-box',
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
-          letterSpacing: '0.3px',
-          lineHeight: 1.3
+          lineHeight: 1.4,
+          letterSpacing: '0.3px'
         }}>
           {product.title}
         </h3>
         
-        {/* Animated Star Rating */}
+        {/* Rating */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          marginBottom: '12px',
-          padding: '8px 12px',
-          background: 'linear-gradient(135deg, #ffeaa7, #fab1a0)',
-          borderRadius: '15px',
-          boxShadow: '0 2px 10px rgba(255, 234, 167, 0.3)'
+          marginBottom: '12px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginRight: '8px' }}>
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
                 style={{
                   width: isMobile ? '12px' : '14px',
                   height: isMobile ? '12px' : '14px',
-                  color: i < Math.floor(parseFloat(product.rating)) ? '#fdcb6e' : '#ddd',
-                  fill: i < Math.floor(parseFloat(product.rating)) ? '#fdcb6e' : '#ddd',
-                  transition: 'all 0.3s ease',
-                  animation: `starTwinkle 1s ease-in-out ${i * 0.2}s infinite alternate`
+                  color: i < Math.floor(parseFloat(product.rating)) ? '#fbbf24' : '#e5e7eb',
+                  fill: i < Math.floor(parseFloat(product.rating)) ? '#fbbf24' : '#e5e7eb'
                 }}
               />
             ))}
           </div>
           <span style={{
-            fontSize: isMobile ? '11px' : '12px',
-            color: '#2d3436',
-            marginLeft: '8px',
-            fontWeight: '600'
+            fontSize: isMobile ? '12px' : '13px',
+            color: '#6b7280',
+            fontWeight: '500'
           }}>
-            ({product.rating}) • {product.reviewsCount}
+            ({product.rating})
           </span>
         </div>
 
-        {/* Advanced Price Display */}
+        {/* Price Section */}
         <div style={{
-          padding: '15px',
-          borderRadius: '18px',
-          background: 'linear-gradient(135deg, #667eea, #764ba2)',
-          color: '#ffffff',
-          marginBottom: '12px',
-          boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)',
-          position: 'relative',
-          overflow: 'hidden'
+          marginBottom: isMobile ? '8px' : '12px'
         }}>
-          {/* Price Background Animation */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: '-100%',
-            width: '100%',
-            height: '100%',
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-            animation: 'priceShimmer 4s infinite',
-          }} />
-          
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            position: 'relative',
-            zIndex: 1
+            gap: '8px'
           }}>
-            <div>
+            <span style={{
+              fontSize: isMobile ? '18px' : '22px',
+              fontWeight: '700',
+              color: '#1f2937'
+            }}>
+              ₹{product.price.toLocaleString()}
+            </span>
+            {product.originalPrice > product.price && (
               <span style={{
-                fontSize: isMobile ? '18px' : '22px',
-                fontWeight: '800',
-                textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                fontSize: isMobile ? '14px' : '16px',
+                color: '#9ca3af',
+                textDecoration: 'line-through',
+                fontWeight: '500'
               }}>
-                ₹{product.price}
+                ₹{product.originalPrice.toLocaleString()}
               </span>
-              {product.originalPrice > product.price && (
-                <span style={{
-                  fontSize: isMobile ? '12px' : '14px',
-                  opacity: 0.8,
-                  textDecoration: 'line-through',
-                  marginLeft: '10px'
-                }}>
-                  ₹{product.originalPrice}
-                </span>
-              )}
-            </div>
-            <ShoppingBag style={{
-              width: isMobile ? '16px' : '20px',
-              height: isMobile ? '16px' : '20px',
-              opacity: 0.8
-            }} />
+            )}
           </div>
         </div>
 
-        {/* Stock and Size Info */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontSize: isMobile ? '11px' : '12px',
-          color: '#636e72',
-          fontWeight: '500'
-        }}>
-          <span style={{
-            padding: '4px 10px',
-            background: product.inStock ? 'linear-gradient(135deg, #00b894, #00cec9)' : '#fab1a0',
+        {/* Add to Cart Button - Mobile */}
+        {isMobile && (
+          <button style={{
+            width: '100%',
+            marginTop: '8px',
+            padding: '10px',
+            background: '#1f2937',
             color: '#ffffff',
-            borderRadius: '10px',
-            fontSize: isMobile ? '9px' : '10px',
-            fontWeight: '600'
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '13px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'background-color 0.3s ease',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px'
+          }}
+          onMouseDown={(e) => {
+            e.target.style.background = '#111827';
+          }}
+          onMouseUp={(e) => {
+            e.target.style.background = '#1f2937';
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            // Add to cart functionality
           }}>
-            {product.inStock ? '✓ In Stock' : '⚠ Low Stock'}
-          </span>
-          <span>📏 {product.sizes.length} sizes</span>
-        </div>
+            Add to Cart
+          </button>
+        )}
       </div>
     </div>
+  );
+
+  // Mobile Filter Modal
+  const MobileFilterModal = () => (
+    showFilters && isMobile && (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.5)',
+        zIndex: 999,
+        display: 'flex',
+        alignItems: 'flex-end'
+      }}>
+        <div style={{
+          width: '100%',
+          background: '#ffffff',
+          borderRadius: '12px 12px 0 0',
+          padding: '20px',
+          maxHeight: '80vh',
+          overflow: 'auto'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '20px'
+          }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#1f2937',
+              margin: 0
+            }}>
+              Filters & Sort
+            </h3>
+            <button
+              onClick={() => setShowFilters(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '4px'
+              }}
+            >
+              <X size={20} color="#6b7280" />
+            </button>
+          </div>
+          
+          <div style={{ color: '#6b7280' }}>
+            <p>Filter options will be implemented here...</p>
+            <button
+              onClick={() => setShowFilters(false)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                background: '#374151',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                marginTop: '20px'
+              }}
+            >
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   );
 
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 25%, #a8edea 50%, #fed6e3 75%, #d299c2 100%)',
-      fontFamily: "'Inter', 'Segoe UI', sans-serif",
-      position: 'relative'
+      background: '#f8fafc',
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+      position: 'relative',
+      paddingTop: isMobile ? '0' : '0'
     }}>
-      {/* Floating Background Decorations */}
+      {/* Professional Glass Header */}
       <div style={{
-        position: 'absolute',
-        top: '10%',
-        left: '5%',
-        width: '120px',
-        height: '120px',
-        background: 'linear-gradient(45deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1))',
-        borderRadius: '50%',
-        animation: 'float 8s ease-in-out infinite',
-        filter: 'blur(2px)'
-      }} />
-      
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        right: '8%',
-        width: '80px',
-        height: '80px',
-        background: 'linear-gradient(45deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))',
-        borderRadius: '50%',
-        animation: 'float 6s ease-in-out infinite reverse',
-        filter: 'blur(1px)'
-      }} />
-
-      {/* Advanced Glass Header */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.25)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.3)',
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        borderBottom: '1px solid #e5e7eb',
         position: 'sticky',
         top: 0,
-        zIndex: 1000,
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+        zIndex: isMobile ? 100 : 1000,
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
       }}>
         <div style={{
           maxWidth: '1400px',
           margin: '0 auto',
-          padding: '0 20px'
+          padding: '0 15px'
         }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            height: '80px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <button
-                onClick={() => navigate(-1)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  background: 'rgba(255, 255, 255, 0.4)',
-                  border: 'none',
-                  borderRadius: '20px',
-                  padding: '12px 20px',
-                  color: '#2d3436',
-                  cursor: 'pointer',
-                  marginRight: '25px',
-                  transition: 'all 0.3s ease',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  fontWeight: '600',
-                  fontSize: '14px',
-                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.background = 'rgba(255, 255, 255, 0.6)';
-                  e.target.style.transform = 'translateX(-3px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.background = 'rgba(255, 255, 255, 0.4)';
-                  e.target.style.transform = 'translateX(0)';
-                }}
-              >
-                <ArrowLeft style={{ width: '18px', height: '18px', marginRight: '8px' }} />
-                Back
-              </button>
-              <div>
-                <h1 style={{
-                  fontSize: isMobile ? '24px' : '32px',
-                  fontWeight: '800',
-                  color: '#2d3436',
-                  textTransform: 'capitalize',
-                  margin: '0',
-                  letterSpacing: '0.5px'
-                }}>
-                  {name} Collection
-                </h1>
-                <p style={{
-                  fontSize: '14px',
-                  color: '#636e72',
-                  margin: '4px 0 0 0',
-                  fontWeight: '500'
-                }}>
-                  {filteredProducts.length} amazing products found
-                </p>
-              </div>
-            </div>
-            
+          {/* Desktop Header */}
+          {!isMobile && (
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '15px'
+              justifyContent: 'space-between',
+              height: '70px'
             }}>
-              {/* Advanced View Toggle */}
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <button
+                  onClick={() => navigate(-1)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: '#ffffff',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    padding: '10px 16px',
+                    color: '#374151',
+                    cursor: 'pointer',
+                    marginRight: '20px',
+                    transition: 'all 0.3s ease',
+                    fontWeight: '500',
+                    fontSize: '14px',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = '#f9fafb';
+                    e.target.style.borderColor = '#9ca3af';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = '#ffffff';
+                    e.target.style.borderColor = '#d1d5db';
+                  }}
+                >
+                  <ArrowLeft style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+                  Back
+                </button>
+                <div>
+                  <h1 style={{
+                    fontSize: '28px',
+                    fontWeight: '700',
+                    color: '#111827',
+                    textTransform: 'capitalize',
+                    margin: '0',
+                    letterSpacing: '0.3px'
+                  }}>
+                    {name} Collection
+                  </h1>
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#6b7280',
+                    margin: '4px 0 0 0',
+                    fontWeight: '400'
+                  }}>
+                    {filteredProducts.length} products available
+                  </p>
+                </div>
+              </div>
+              
               <div style={{
-                display: isMobile ? 'none' : 'flex',
-                background: 'rgba(255, 255, 255, 0.4)',
-                borderRadius: '20px',
-                padding: '6px',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                {/* Professional View Toggle */}
+                <div style={{
+                  display: 'flex',
+                  background: '#ffffff',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  padding: '2px',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                }}>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      background: viewMode === 'grid' ? '#374151' : 'transparent',
+                      color: viewMode === 'grid' ? '#ffffff' : '#6b7280'
+                    }}
+                  >
+                    <Grid style={{ width: '16px', height: '16px' }} />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      background: viewMode === 'list' ? '#374151' : 'transparent',
+                      color: viewMode === 'list' ? '#ffffff' : '#6b7280'
+                    }}
+                  >
+                    <List style={{ width: '16px', height: '16px' }} />
+                  </button>
+                </div>
+
+                {/* Professional Sort Dropdown */}
+                <div style={{ position: 'relative' }}>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    style={{
+                      appearance: 'none',
+                      background: '#ffffff',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      padding: '10px 35px 10px 16px',
+                      outline: 'none',
+                      cursor: 'pointer',
+                      color: '#374151',
+                      fontWeight: '500',
+                      fontSize: '14px',
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                    }}
+                  >
+                    {sortOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown style={{
+                    width: '16px',
+                    height: '16px',
+                    color: '#6b7280',
+                    position: 'absolute',
+                    right: '12px',
+                    top: '12px',
+                    pointerEvents: 'none'
+                  }} />
+                </div>
+
+                {/* Professional Filter Button */}
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 20px',
+                    background: '#374151',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    fontSize: '14px',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = '#1f2937';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = '#374151';
+                  }}
+                >
+                  <SlidersHorizontal style={{ width: '16px', height: '16px' }} />
+                  Filters
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Mobile Header */}
+          {isMobile && (
+            <div style={{ paddingTop: '15px', paddingBottom: '15px' }}>
+              {/* Top Row */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '15px'
               }}>
                 <button
-                  onClick={() => setViewMode('grid')}
+                  onClick={() => navigate(-1)}
                   style={{
-                    padding: '10px 16px',
-                    borderRadius: '16px',
-                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: '#ffffff',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    padding: '8px 12px',
+                    color: '#374151',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
-                    background: viewMode === 'grid' 
-                      ? 'linear-gradient(135deg, #667eea, #764ba2)' 
-                      : 'transparent',
-                    color: viewMode === 'grid' ? '#ffffff' : '#636e72'
+                    fontWeight: '500',
+                    fontSize: '12px',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
                   }}
                 >
-                  <Grid style={{ width: '18px', height: '18px' }} />
+                  <ArrowLeft style={{ width: '14px', height: '14px', marginRight: '6px' }} />
+                  Back
                 </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  style={{
-                    padding: '10px 16px',
-                    borderRadius: '16px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    background: viewMode === 'list' 
-                      ? 'linear-gradient(135deg, #667eea, #764ba2)' 
-                      : 'transparent',
-                    color: viewMode === 'list' ? '#ffffff' : '#636e72'
-                  }}
-                >
-                  <List style={{ width: '18px', height: '18px' }} />
-                </button>
+
+                <div style={{ textAlign: 'center', flex: 1, margin: '0 10px' }}>
+                  <h1 style={{
+                    fontSize: '18px',
+                    fontWeight: '700',
+                    color: '#111827',
+                    textTransform: 'capitalize',
+                    margin: '0',
+                    letterSpacing: '0.3px'
+                  }}>
+                    {name}
+                  </h1>
+                  <p style={{
+                    fontSize: '12px',
+                    color: '#6b7280',
+                    margin: '2px 0 0 0',
+                    fontWeight: '400'
+                  }}>
+                    {filteredProducts.length} products
+                  </p>
+                </div>
+
+                <div style={{ position: 'relative' }}>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    style={{
+                      appearance: 'none',
+                      background: '#ffffff',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      padding: '8px 25px 8px 12px',
+                      outline: 'none',
+                      cursor: 'pointer',
+                      color: '#374151',
+                      fontWeight: '500',
+                      fontSize: '12px',
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                      minWidth: '80px'
+                    }}
+                  >
+                    {sortOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown style={{
+                    width: '12px',
+                    height: '12px',
+                    color: '#6b7280',
+                    position: 'absolute',
+                    right: '8px',
+                    top: '10px',
+                    pointerEvents: 'none'
+                  }} />
+                </div>
               </div>
 
-              {/* Premium Sort Dropdown */}
-              <div style={{ position: 'relative' }}>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+              {/* Search Bar - Mobile */}
+              <div style={{
+                position: 'relative',
+                marginBottom: '15px'
+              }}>
+                <Search style={{
+                  width: '16px',
+                  height: '16px',
+                  color: '#6b7280',
+                  position: 'absolute',
+                  left: '12px',
+                  top: '12px'
+                }} />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   style={{
-                    appearance: 'none',
-                    background: 'rgba(255, 255, 255, 0.4)',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    borderRadius: '20px',
-                    padding: '12px 40px 12px 20px',
+                    width: '100%',
+                    paddingLeft: '40px',
+                    paddingRight: '12px',
+                    paddingTop: '12px',
+                    paddingBottom: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
                     outline: 'none',
-                    cursor: 'pointer',
-                    color: '#2d3436',
-                    fontWeight: '600',
                     fontSize: '14px',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)'
+                    background: '#ffffff',
+                    color: '#374151',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                    boxSizing: 'border-box'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.border = '1px solid #3b82f6';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.border = '1px solid #d1d5db';
+                    e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+                  }}
+                />
+              </div>
+
+              {/* Filter Button - Mobile */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginBottom: '10px'
+              }}>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 20px',
+                    background: '#374151',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    fontSize: '12px',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                    zIndex: 50
                   }}
                 >
-                  {sortOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown style={{
+                  <SlidersHorizontal style={{ width: '14px', height: '14px' }} />
+                  Filters & Sort
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Desktop Professional Search Bar */}
+          {!isMobile && (
+            <div style={{ paddingBottom: '20px' }}>
+              <div style={{
+                position: 'relative',
+                maxWidth: '500px',
+                margin: '0 auto'
+              }}>
+                <Search style={{
                   width: '18px',
                   height: '18px',
-                  color: '#636e72',
+                  color: '#6b7280',
                   position: 'absolute',
-                  right: '15px',
-                  top: '15px',
-                  pointerEvents: 'none'
+                  left: '16px',
+                  top: '14px'
                 }} />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    paddingLeft: '45px',
+                    paddingRight: '16px',
+                    paddingTop: '12px',
+                    paddingBottom: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    outline: 'none',
+                    fontSize: '14px',
+                    background: '#ffffff',
+                    color: '#374151',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.border = '1px solid #3b82f6';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.border = '1px solid #d1d5db';
+                    e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+                  }}
+                />
               </div>
-
-              {/* Premium Filter Button */}
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '12px 24px',
-                  background: 'linear-gradient(135deg, #ff6b6b, #feca57)',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '20px',
-                  cursor: 'pointer',
-                  fontWeight: '700',
-                  fontSize: '14px',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 8px 25px rgba(255, 107, 107, 0.3)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)'
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.transform = 'translateY(-2px) scale(1.05)';
-                  e.target.style.boxShadow = '0 12px 35px rgba(255, 107, 107, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = 'translateY(0) scale(1)';
-                  e.target.style.boxShadow = '0 8px 25px rgba(255, 107, 107, 0.3)';
-                }}
-              >
-                <SlidersHorizontal style={{ width: '18px', height: '18px' }} />
-                Filters
-              </button>
             </div>
-          </div>
-
-          {/* Premium Search Bar */}
-          <div style={{ paddingBottom: '25px' }}>
-            <div style={{
-              position: 'relative',
-              maxWidth: '600px',
-              margin: '0 auto'
-            }}>
-              <Search style={{
-                width: '22px',
-                height: '22px',
-                color: '#636e72',
-                position: 'absolute',
-                left: '25px',
-                top: '18px'
-              }} />
-              <input
-                type="text"
-                placeholder="Search for amazing products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%',
-                  paddingLeft: '65px',
-                  paddingRight: '25px',
-                  paddingTop: '18px',
-                  paddingBottom: '18px',
-                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                  borderRadius: '30px',
-                  outline: 'none',
-                  fontSize: '16px',
-                  background: 'rgba(255, 255, 255, 0.4)',
-                  color: '#2d3436',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  transition: 'all 0.3s ease',
-                  boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)'
-                }}
-                onFocus={(e) => {
-                  e.target.style.border = '2px solid rgba(102, 126, 234, 0.5)';
-                  e.target.style.background = 'rgba(255, 255, 255, 0.6)';
-                  e.target.style.transform = 'scale(1.02)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.border = '2px solid rgba(255, 255, 255, 0.3)';
-                  e.target.style.background = 'rgba(255, 255, 255, 0.4)';
-                  e.target.style.transform = 'scale(1)';
-                }}
-              />
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Hero Section */}
-      <div style={{
-        padding: '60px 20px',
-        textAlign: 'center',
-        position: 'relative'
-      }}>
-        <h1 style={{
-          fontSize: isMobile ? '2.5rem' : '4rem',
-          fontWeight: '900',
-          background: 'linear-gradient(135deg, #667eea, #764ba2)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          marginBottom: '20px',
-          textTransform: 'capitalize',
-          letterSpacing: '1px',
-          animation: 'titleFloat 3s ease-in-out infinite alternate'
+      {/* Professional Hero Section - Desktop only */}
+      {!isMobile && (
+        <div style={{
+          padding: '40px 20px',
+          textAlign: 'center',
+          background: '#ffffff',
+          borderBottom: '1px solid #e5e7eb'
         }}>
-          Discover {name}
-        </h1>
-        <p style={{
-          fontSize: isMobile ? '16px' : '20px',
-          color: '#636e72',
-          fontWeight: '500',
-          animation: 'fadeInUp 1s ease-out 0.5s both'
+          <h1 style={{
+            fontSize: '3rem',
+            fontWeight: '700',
+            color: '#111827',
+            marginBottom: '16px',
+            textTransform: 'capitalize',
+            letterSpacing: '0.5px'
+          }}>
+            {name} Collection
+          </h1>
+          <p style={{
+            fontSize: '16px',
+            color: '#6b7280',
+            fontWeight: '400',
+            maxWidth: '600px',
+            margin: '0 auto'
+          }}>
+            Discover our curated selection of premium {name} designed for style and comfort
+          </p>
+        </div>
+      )}
+
+      {/* Mobile Professional Hero Section */}
+      {isMobile && (
+        <div style={{
+          padding: '16px 20px',
+          textAlign: 'center',
+          background: '#ffffff',
+          borderBottom: '1px solid #e5e7eb'
         }}>
-          Curated collection of premium {name} just for you ✨
-        </p>
-      </div>
+          <h1 style={{
+            fontSize: '1.75rem',
+            fontWeight: '700',
+            color: '#111827',
+            marginBottom: '8px',
+            textTransform: 'capitalize',
+            letterSpacing: '0.3px'
+          }}>
+            {name} Collection
+          </h1>
+          <p style={{
+            fontSize: '14px',
+            color: '#6b7280',
+            fontWeight: '400'
+          }}>
+            Premium quality, curated for you
+          </p>
+        </div>
+      )}
 
       {/* Products Grid */}
       <div style={{
         maxWidth: '1400px',
         margin: '0 auto',
-        padding: '0 20px 80px'
+        padding: isMobile ? '0 10px 60px' : '0 20px 80px'
       }}>
         {loading ? (
           <div style={{
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: '100px 0',
+            padding: isMobile ? '60px 0' : '100px 0',
             flexDirection: 'column'
           }}>
             <div style={{
-              width: '80px',
-              height: '80px',
-              border: '6px solid rgba(102, 126, 234, 0.2)',
-              borderTop: '6px solid #667eea',
+              width: isMobile ? '40px' : '50px',
+              height: isMobile ? '40px' : '50px',
+              border: '3px solid #e5e7eb',
+              borderTop: '3px solid #374151',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
-              marginBottom: '25px'
+              marginBottom: '20px'
             }}></div>
             <h2 style={{
-              color: '#2d3436',
-              fontSize: '24px',
-              fontWeight: '700',
-              marginBottom: '10px'
+              color: '#1f2937',
+              fontSize: isMobile ? '16px' : '20px',
+              fontWeight: '600',
+              marginBottom: '8px'
             }}>
-              Fetching amazing products...
+              Loading products...
             </h2>
             <p style={{
-              color: '#636e72',
-              fontSize: '16px',
-              margin: 0
+              color: '#6b7280',
+              fontSize: isMobile ? '14px' : '16px',
+              margin: 0,
+              textAlign: 'center'
             }}>
-              Please wait while we curate the best {name} for you! 🛍️
+              Please wait while we fetch the latest {name} collection
             </p>
           </div>
         ) : filteredProducts.length === 0 ? (
           <div style={{
             textAlign: 'center',
-            padding: '100px 20px',
-            color: '#2d3436'
+            padding: isMobile ? '60px 20px' : '100px 20px',
+            color: '#1f2937'
           }}>
-            <div style={{ marginBottom: '30px' }}>
+            <div style={{ marginBottom: '25px' }}>
               <Grid style={{
-                width: '80px',
-                height: '80px',
+                width: isMobile ? '50px' : '70px',
+                height: isMobile ? '50px' : '70px',
                 margin: '0 auto',
-                opacity: 0.5,
-                animation: 'float 3s ease-in-out infinite'
+                color: '#9ca3af'
               }} />
             </div>
             <h3 style={{
-              fontSize: '28px',
-              fontWeight: '700',
-              marginBottom: '15px'
+              fontSize: isMobile ? '18px' : '24px',
+              fontWeight: '600',
+              marginBottom: '12px',
+              color: '#1f2937'
             }}>
-              No products found 😔
+              No products found
             </h3>
             <p style={{
-              fontSize: '18px',
-              opacity: 0.8
+              fontSize: isMobile ? '14px' : '16px',
+              color: '#6b7280'
             }}>
-              Try adjusting your search or filters to discover amazing products!
+              Try adjusting your search or filters to find what you're looking for
             </p>
           </div>
         ) : (
           <div style={{
             display: 'flex',
             flexWrap: 'wrap',
-            justifyContent: 'center',
+            justifyContent: isMobile ? 'space-around' : 'center',
             gap: isMobile ? '8px' : '15px',
             padding: '20px 0'
           }}>
@@ -892,74 +1035,56 @@ export default function CategoryPage() {
         )}
       </div>
 
-      {/* Advanced CSS Animations */}
-      <style jsx>{`
-        @keyframes slideInUp {
-          from {
-            opacity: 0;
-            transform: translateY(60px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
+      {/* Mobile Filter Modal */}
+      <MobileFilterModal />
 
+      {/* Professional CSS Animations */}
+      <style jsx>{`
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
 
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          33% { transform: translateY(-15px) rotate(5deg); }
-          66% { transform: translateY(-8px) rotate(-3deg); }
-        }
-
-        @keyframes shimmer {
-          0% { left: -100%; }
-          100% { left: 100%; }
-        }
-
-        @keyframes bounce {
-          0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
-          50% { transform: scale(1.1) rotate(5deg); opacity: 0.8; }
-        }
-
-        @keyframes glow {
-          0% { box-shadow: 0 4px 15px rgba(253, 203, 110, 0.4); }
-          100% { box-shadow: 0 8px 30px rgba(253, 203, 110, 0.8); }
-        }
-
-        @keyframes starTwinkle {
-          0% { transform: scale(1) rotate(0deg); opacity: 1; }
-          100% { transform: scale(1.2) rotate(180deg); opacity: 0.7; }
-        }
-
-        @keyframes priceShimmer {
-          0% { left: -100%; }
-          50% { left: 100%; }
-          100% { left: -100%; }
-        }
-
-        @keyframes titleFloat {
-          0% { transform: translateY(0px); }
-          100% { transform: translateY(-10px); }
-        }
-
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
         * {
           -webkit-tap-highlight-color: transparent;
+          box-sizing: border-box;
+        }
+
+        /* Mobile specific styles */
+        @media (max-width: 768px) {
+          .category-page {
+            padding-top: 0;
+          }
+          
+          /* Touch-friendly buttons */
+          button {
+            min-height: 40px;
+            min-width: 40px;
+          }
+          
+          /* Better text readability on mobile */
+          input, select {
+            font-size: 16px; /* Prevents zoom on iOS */
+          }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
         }
       `}</style>
     </div>

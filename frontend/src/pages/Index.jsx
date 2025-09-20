@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Star, ShoppingBag, Users, Award, Truck, ArrowRight, Shirt, Package } from 'lucide-react';
+const API_BASE_URL = "http://localhost:8000/api/v1";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ export default function Index() {
     originalPrice: 1299 + i * 150,
     image: `https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=300&fit=crop&rand=${i}`,
     rating: 4.5,
-    discount: 30 + i * 2
+    discount: 30 + i * 2,
   }));
 
   const tshirtCollections = Array.from({ length: 8 }, (_, i) => ({
@@ -23,7 +24,7 @@ export default function Index() {
     originalPrice: 899 + i * 100,
     image: `https://images.unsplash.com/photo-1583743814966-8936f37f1173?w=300&h=300&fit=crop&rand=${i}`,
     rating: 4.6,
-    discount: 35 + i * 2
+    discount: 35 + i * 2,
   }));
 
   const newPants = Array.from({ length: 8 }, (_, i) => ({
@@ -33,8 +34,78 @@ export default function Index() {
     originalPrice: 1899 + i * 250,
     image: `https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=300&fit=crop&rand=${i}`,
     rating: 4.3,
-    discount: 25 + i * 3
+    discount: 25 + i * 3,
   }));
+
+
+  // API products state
+  const [apiProducts, setApiProducts] = useState({ shirts: [], tshirts: [], pants: [] });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  // Fetch products with duplicate removal
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const [shirtsRes, tshirtsRes, pantsRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/products/?category=Shirts&per_page=8&is_active=true`),
+        fetch(`${API_BASE_URL}/products/?category=T-Shirts&per_page=8&is_active=true`),
+        fetch(`${API_BASE_URL}/products/?category=Pants&per_page=8&is_active=true`)
+      ]);
+
+      const shirtsData = shirtsRes.ok ? await shirtsRes.json() : { products: [] };
+      const tshirtsData = tshirtsRes.ok ? await tshirtsRes.json() : { products: [] };
+      const pantsData = pantsRes.ok ? await pantsRes.json() : { products: [] };
+
+      const seenIds = new Set();
+      const filterDuplicates = (products) => {
+        return products.filter(product => {
+          if (seenIds.has(product.id)) return false;
+          seenIds.add(product.id);
+          return true;
+        });
+      };
+
+      const filteredShirts = filterDuplicates(shirtsData.products);
+      const filteredTshirts = filterDuplicates(tshirtsData.products);
+      const filteredPants = filterDuplicates(pantsData.products);
+
+      const transform = (products, fallback) =>
+        products.length > 0
+          ? products.map((product, i) => ({
+              id: product.id,
+              title: product.name,
+              price: product.price,
+              originalPrice: product.original_price || (product.price + 400),
+              image:
+                product.images && product.images.length > 0
+                  ? product.images[0]
+                  : fallback[i]?.image || fallback[0].image,
+              rating: 4.5,
+              discount: product.original_price
+                ? Math.round(
+                    ((product.original_price - product.price) / product.original_price) * 100
+                  )
+                : 30 + i * 2,
+            }))
+          : fallback;
+
+      setApiProducts({
+        shirts: transform(filteredShirts, newShirts),
+        tshirts: transform(filteredTshirts, tshirtCollections),
+        pants: transform(filteredPants, newPants),
+      });
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setApiProducts({ shirts: newShirts, tshirts: tshirtCollections, pants: newPants });
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   // Collections Components
   const ScrollableSection = ({ title, items, delay = 0 }) => {
@@ -1057,15 +1128,15 @@ export default function Index() {
         {/* COLLECTIONS SECTION */}
         <section id="collections" style={collectionsStyles.collectionsSection}>
           <div style={collectionsStyles.collectionsContainer}>
-            <ScrollableSection title="New Arrivals - Shirts" items={newShirts} delay={0} />
+            <ScrollableSection title="New Arrivals - Shirts" items={apiProducts.shirts} delay={0} />
             
             <PassionSection text="Style Meets Passion" delay={0.3} />
             
-            <ScrollableSection title="T-Shirt Collections" items={tshirtCollections} delay={0.6} />
+            <ScrollableSection title="T-Shirt Collections" items={apiProducts.tshirts} delay={0.6} />
             
             <PassionSection text="Comfort Redefined" delay={0.9} />
             
-            <ScrollableSection title="Premium Pants Collection" items={newPants} delay={1.2} />
+            <ScrollableSection title="Premium Pants Collection" items={apiProducts.pants} delay={1.2} />
           </div>
         </section>
 
