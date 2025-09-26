@@ -410,7 +410,7 @@ export default function Footer() {
                 <a href="#" style={styles.socialLink} className="social-link facebook">
                   <Facebook size={isMobile ? 20 : 24} />
                 </a>
-                <a href="#" style={styles.socialLink} className="social-link instagram">
+                <a href="https://www.instagram.com/bold_fit_menswear?igsh=MTZna3E5dGJwc2FpMA==" style={styles.socialLink} className="social-link instagram">
                   <Instagram size={isMobile ? 20 : 24} />
                 </a>
                 <a href="#" style={styles.socialLink} className="social-link twitter">
