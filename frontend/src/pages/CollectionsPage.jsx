@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, Star, ShoppingBag, Users, Award, Truck, Loader2, AlertCircle } from 'lucide-react';
 
-const API_BASE_URL = `{import.meta.env.BACKEND_BASE_URL}/api/v1`;
+const API_BASE_URL = "https://boltfit-backend-r4no.onrender.com/api/v1";
 
 export default function CollectionsPage() {
   const navigate = useNavigate();
