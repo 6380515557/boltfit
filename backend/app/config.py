@@ -21,8 +21,10 @@ class Settings:
     
     # CORS
     ALLOWED_ORIGINS: list = [
+        "https://boldfit-admin.onrender.com",
         "https://boldfit-g24k.onrender.com",
-        "http://127.0.0.1:5173"
+        "http://127.0.0.1:5173",
+        "http://localhost:3000"
     ]
 
 settings = Settings()

@@ -350,17 +350,6 @@ export default function Header() {
                 {category.name}
               </Link>
             ))}
-            
-            <Link
-              to="/admin"
-              style={{
-                ...styles.navLink,
-                ...(isActive('/admin') ? styles.navLinkActive : {})
-              }}
-              className="nav-link"
-            >
-              Admin
-            </Link>
           </nav>
 
           {/* Right Section */}
@@ -415,18 +404,6 @@ export default function Header() {
               {category.name}
             </Link>
           ))}
-          
-          <Link
-            to="/admin"
-            style={{
-              ...styles.mobileNavLink,
-              ...(isActive('/admin') ? styles.mobileNavLinkActive : {})
-            }}
-            className="mobile-nav-link"
-            onClick={closeMenu}
-          >
-            Admin
-          </Link>
         </nav>
       </header>
     </>

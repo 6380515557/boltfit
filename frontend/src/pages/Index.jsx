@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Star, ShoppingBag, Users, Award, Truck, ArrowRight, Shirt, Package } from 'lucide-react';
-const API_BASE_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = "https://boltfit-backend-r4no.onrender.com/api/v1";
 
 export default function Index() {
   const navigate = useNavigate();
