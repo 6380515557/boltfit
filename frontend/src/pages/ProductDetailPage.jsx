@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Star, Check, ShoppingCart, Plus, Minus, Send, Shield, Truck, RotateCcw, AlertTriangle } from 'lucide-react';
 
-const API_BASE_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = `{import.meta.env.BACKEND_BASE_URL}/api/v1`;
 
 export default function ProductDetailPage() {
   const { id } = useParams();
