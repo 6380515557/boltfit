@@ -21,7 +21,7 @@ class Settings:
     
     # CORS
     ALLOWED_ORIGINS: list = [
-        "http://localhost:5173",
+        "https://boldfit-g24k.onrender.com",
         "http://127.0.0.1:5173"
     ]
 
