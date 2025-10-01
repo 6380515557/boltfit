@@ -506,38 +506,6 @@ You can now send the message directly!
               </div>
             </div>
 
-            {/* Product Image Preview */}
-            <div style={styles.section}>
-              <h3 style={styles.sectionTitle}>
-                <Image size={20} />
-                Product Image
-              </h3>
-              
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '15px',
-                alignItems: 'center'
-              }}>
-                <img 
-                  src={productData.image} 
-                  alt={productData.title}
-                  style={styles.previewImage}
-                />
-                
-                <p style={{
-                  fontSize: '12px',
-                  color: '#666',
-                  textAlign: 'center',
-                  margin: '0',
-                  lineHeight: '1.4'
-                }}>
-                  📸 Product image link will be included in the WhatsApp message.<br />
-                  You can view the full image by clicking the link in the message.
-                </p>
-              </div>
-            </div>
-
             {/* Additional Information */}
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>
