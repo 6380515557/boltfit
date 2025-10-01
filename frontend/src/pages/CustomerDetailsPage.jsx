@@ -22,7 +22,7 @@ export default function CustomerDetailsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Your WhatsApp number - replace with your actual number
-  const WHATSAPP_NUMBER = "919876543210"; // Replace with your number
+  const WHATSAPP_NUMBER = "918778146987"; // Replace with your number
 
   // Redirect if no product data
   useEffect(() => {
