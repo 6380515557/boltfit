@@ -11,31 +11,31 @@ security = HTTPBearer()
 class GoogleAuth:
     def __init__(self):
         self.client_id = settings.GOOGLE_CLIENT_ID
-        self.admin_email = settings.ADMIN_EMAIL.lower().strip()
-    
+        self.admin_emails = settings.ADMIN_EMAIL_LIST  # Now a list
+
     def verify_admin_token(self, token: str):
         """
-        Verify Google ID token and check if user is the specific admin
+        Verify Google ID token and check if user is one of the authorized admins
         """
         try:
             # Verify the token with Google
             idinfo = id_token.verify_oauth2_token(
-                token, 
-                requests.Request(), 
+                token,
+                requests.Request(),
                 self.client_id
             )
-            
+
             # Get user email from verified token
             user_email = idinfo.get('email', '').lower().strip()
-            
-            # Check if this email is our specific admin
-            if user_email != self.admin_email:
+
+            # Check if this email is in our admin list
+            if user_email not in self.admin_emails:
                 logger.warning(f"Access denied for email: {user_email}")
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, 
-                    detail=f"Access denied. Only {self.admin_email} is authorized as admin."
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Access denied. Email not authorized as admin."
                 )
-            
+
             # Return admin user info
             return {
                 "email": user_email,
@@ -44,11 +44,11 @@ class GoogleAuth:
                 "is_admin": True,
                 "verified": True
             }
-        
+
         except ValueError as e:
             logger.error(f"Token verification failed: {e}")
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, 
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid or expired Google token"
             )
         except HTTPException:
@@ -56,7 +56,7 @@ class GoogleAuth:
         except Exception as e:
             logger.error(f"Unexpected authentication error: {e}")
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, 
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Authentication failed"
             )
 

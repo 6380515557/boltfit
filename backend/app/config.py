@@ -17,8 +17,12 @@ class Settings:
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID")
     
     # Admin - ✅ This must match your Google account
-    ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "workingprojectjagan123@gmail.com")
-    
+    # Admin emails - ✅ List of authorized admin emails
+    ADMIN_EMAIL_LIST: list = [
+        "workingprojectjagan123@gmail.com",
+        "jaganjagan37571@gmail.com"
+    ]
+
     # CORS
     ALLOWED_ORIGINS: list = [
         "https://boldfit-admin.onrender.com",
