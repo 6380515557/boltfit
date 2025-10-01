@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Phone, MapPin, Mail, MessageSquare, Download } from 'lucide-react';
+import { ArrowLeft, User, Phone, MapPin, Mail, MessageSquare, Image } from 'lucide-react';
 
 export default function CustomerDetailsPage() {
   const location = useLocation();
@@ -20,7 +20,6 @@ export default function CustomerDetailsPage() {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
 
   // Your WhatsApp number - replace with your actual number
   const WHATSAPP_NUMBER = "918778146987"; // Replace with your number
@@ -88,31 +87,6 @@ export default function CustomerDetailsPage() {
     }
   };
 
-  // Function to download product image
-  const downloadProductImage = async () => {
-    setIsDownloading(true);
-    try {
-      const response = await fetch(productData.image);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${productData.title.replace(/\s+/g, '_')}_product_image.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      setIsDownloading(false);
-      return true;
-    } catch (error) {
-      console.error('Error downloading image:', error);
-      setIsDownloading(false);
-      return false;
-    }
-  };
-
   const formatWhatsAppMessage = () => {
     const message = `
 🛒 *New Order Details*
@@ -147,8 +121,7 @@ Please confirm this order. Thank you!
     return encodeURIComponent(message);
   };
 
-  // Updated handleSubmit with image download
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -157,37 +130,27 @@ Please confirm this order. Thank you!
 
     setIsSubmitting(true);
 
-    // Download the image first
-    const imageDownloaded = await downloadProductImage();
-    
     // Simulate processing time
     setTimeout(() => {
       const whatsappMessage = formatWhatsAppMessage();
       const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`;
       
-      // Open WhatsApp
+      // Open WhatsApp with message including image link
       window.open(whatsappUrl, '_blank');
       
-      // Show instructions based on download success
-      if (imageDownloaded) {
-        alert(`
-✅ Order details sent to WhatsApp!
-📸 Product image downloaded to your device!
-
-NEXT STEP:
-Please attach the downloaded image to your WhatsApp message and send it.
-        `);
-      } else {
-        alert(`
-✅ Order details sent to WhatsApp!
-❌ Image download failed.
-
-NEXT STEP:
-Please manually save and send this image: ${productData.image}
-        `);
-      }
-      
       setIsSubmitting(false);
+      
+      // Show success message
+      alert(`
+✅ Order details sent to WhatsApp!
+
+The message includes:
+• Complete order information
+• Customer details
+• Product image link
+
+You can now send the message directly!
+      `);
     }, 1000);
   };
 
@@ -330,28 +293,13 @@ Please manually save and send this image: ${productData.image}
       gap: '10px',
       marginTop: '20px'
     },
-    downloadBtn: {
-      background: 'linear-gradient(135deg, #007185, #005a6b)',
-      color: 'white',
-      border: 'none',
-      padding: '12px 24px',
-      borderRadius: '8px',
-      fontSize: '14px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '8px'
-    },
     loading: {
       background: '#6c757d',
       cursor: 'not-allowed'
     },
     previewImage: {
-      width: isMobile ? '150px' : '200px',
-      height: isMobile ? '150px' : '200px',
+      width: isMobile ? '120px' : '150px',
+      height: isMobile ? '120px' : '150px',
       objectFit: 'cover',
       borderRadius: '10px',
       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
@@ -558,10 +506,10 @@ Please manually save and send this image: ${productData.image}
               </div>
             </div>
 
-            {/* Product Image Preview and Download */}
+            {/* Product Image Preview */}
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>
-                <Download size={20} />
+                <Image size={20} />
                 Product Image
               </h3>
               
@@ -577,35 +525,6 @@ Please manually save and send this image: ${productData.image}
                   style={styles.previewImage}
                 />
                 
-                <button
-                  type="button"
-                  onClick={downloadProductImage}
-                  disabled={isDownloading}
-                  style={{
-                    ...styles.downloadBtn,
-                    ...(isDownloading ? styles.loading : {})
-                  }}
-                >
-                  {isDownloading ? (
-                    <>
-                      <div style={{ 
-                        width: '16px', 
-                        height: '16px', 
-                        border: '2px solid #fff',
-                        borderTop: '2px solid transparent',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                      }} />
-                      Downloading...
-                    </>
-                  ) : (
-                    <>
-                      <Download size={16} />
-                      Download Product Image
-                    </>
-                  )}
-                </button>
-                
                 <p style={{
                   fontSize: '12px',
                   color: '#666',
@@ -613,8 +532,8 @@ Please manually save and send this image: ${productData.image}
                   margin: '0',
                   lineHeight: '1.4'
                 }}>
-                  📸 Click to download the product image.<br />
-                  You'll need to attach it to your WhatsApp message.
+                  📸 Product image link will be included in the WhatsApp message.<br />
+                  You can view the full image by clicking the link in the message.
                 </p>
               </div>
             </div>
@@ -661,7 +580,7 @@ Please manually save and send this image: ${productData.image}
               ) : (
                 <>
                   <MessageSquare size={20} />
-                  Continue to WhatsApp
+                  Send to WhatsApp
                 </>
               )}
             </button>
