@@ -18,6 +18,7 @@ import AdminPage from './pages/AdminPage';
 import CollectionsPage from './pages/CollectionsPage';
 import CategoryPage from './pages/CategoryPage';
 import ProductDetailPage from './pages/ProductDetailPage'; // ✅ ADD THIS IMPORT
+import CustomerDetailsPage from './pages/CustomerDetailsPage';
 
 // Add spinner CSS
 const spinnerCSS = `
@@ -45,14 +46,8 @@ export default function App() {
           
           {/* ✅ ADD THIS ROUTE FOR PRODUCT DETAIL PAGE */}
           <Route path="/product/:id" element={<><Header /><ProductDetailPage /><Footer /></>} />
-          
-          {/* Admin Login Route */}
-          <Route path="/login" element={<LoginPage />} />
-          
-          {/* Protected Admin Routes */}
-          <Route path="/admin" element={<ProtectedRoute><AdminHeader /><AdminPage /></ProtectedRoute>} />
-          <Route path="/admin/add-product" element={<ProtectedRoute><AdminHeader /><AddProductPage /></ProtectedRoute>} />
-          
+          <Route path="/customer-details" element={<CustomerDetailsPage />} />
+        
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -113,6 +113,28 @@ export default function ProductDetailPage() {
     setShowSuccess('Added to cart successfully!');
     setTimeout(() => setShowSuccess(''), 3000);
   };
+  // Add this new function after your existing handleAddToCart function
+  const handleBuyNow = () => {
+    if (!selectedSize || !selectedColor) {
+      setError('Please select size and color');
+      return;
+    }
+    
+    // Navigate to customer details page with product info
+    const productData = {
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: mainImage,
+      selectedSize,
+      selectedColor,
+      quantity
+    };
+    
+    navigate('/customer-details', { 
+      state: { productData } 
+    });
+  };
 
   const handleSubmitFeedback = () => {
     if (!feedback.name.trim() || !feedback.comment.trim() || feedback.rating < 1) {
@@ -779,24 +801,39 @@ export default function ProductDetailPage() {
           <div style={styles.buttons}>
             <button
               style={styles.addToCartBtn}
-              className="add-cart"
               onClick={handleAddToCart}
+              className="add-cart"
             >
-              <ShoppingCart size={16} />
-              Add to Cart - ₹{(product.price * quantity).toLocaleString()}
+              <ShoppingCart size={18} />
+              Add to Cart
             </button>
+            
+            <button
+              style={{
+                ...styles.addToCartBtn,
+                background: 'linear-gradient(135deg, #28a745, #20c997)',
+                boxShadow: '0 4px 15px rgba(40, 167, 69, 0.4)'
+              }}
+              onClick={handleBuyNow}
+              className="buy-now"
+            >
+              <ShoppingCart size={18} />
+              Buy Now
+            </button>
+            
             <button
               style={styles.wishlistBtn}
-              className="wishlist"
               onClick={() => setIsWishlisted(!isWishlisted)}
+              className="wishlist"
             >
-              <Heart
-                size={20}
-                fill={isWishlisted ? "#e91e63" : "none"}
-                color={isWishlisted ? "#e91e63" : "#666"}
+              <Heart 
+                size={20} 
+                fill={isWishlisted ? '#e91e63' : 'none'}
+                color={isWishlisted ? '#e91e63' : '#666'}
               />
             </button>
           </div>
+
 
           {/* Product Features */}
           <div style={styles.section}>
