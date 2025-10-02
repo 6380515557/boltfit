@@ -9,6 +9,7 @@ from app.auth.google_auth import get_current_admin
 from datetime import datetime
 import math
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/products", tags=["Products"])
@@ -96,7 +97,7 @@ async def get_product(product_id: str):
             detail="Error fetching product"
         )
 
-# ✅ SIMPLIFIED ADMIN ENDPOINTS - No file upload, just metadata
+# ADMIN ENDPOINTS - ImgBB URLs
 @router.post("/", response_model=ProductResponse)
 async def create_product(
     name: str = Form(...),
@@ -110,16 +111,18 @@ async def create_product(
     colors: str = Form(""),
     is_featured: bool = Form(False),
     is_active: bool = Form(True),
-    image_urls: str = Form("[]"),  # ✅ JSON string of Firebase Storage URLs
+    image_urls: str = Form("[]"),  # JSON string of ImgBB URLs
     current_admin = Depends(get_current_admin)
 ):
-    """Create a new product with Firebase image URLs - ADMIN ONLY"""
+    """Create a new product with ImgBB image URLs - ADMIN ONLY"""
     try:
-        import json
         # Parse image URLs from JSON string
         try:
             images_list = json.loads(image_urls)
-        except:
+            if not isinstance(images_list, list):
+                images_list = []
+        except Exception as e:
+            logger.error(f"Error parsing image_urls: {e}")
             images_list = []
 
         # Create form data model
@@ -160,7 +163,7 @@ async def create_product(
         logger.error(f"Error creating product: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error creating product"
+            detail=f"Error creating product: {str(e)}"
         )
 
 @router.put("/{product_id}", response_model=ProductResponse)
@@ -177,10 +180,10 @@ async def update_product(
     colors: Optional[str] = Form(None),
     is_featured: Optional[bool] = Form(None),
     is_active: Optional[bool] = Form(None),
-    image_urls: Optional[str] = Form(None),  # ✅ JSON string of Firebase URLs
+    image_urls: Optional[str] = Form(None),  # JSON string of ImgBB URLs
     current_admin = Depends(get_current_admin)
 ):
-    """Update a product with Firebase image URLs - ADMIN ONLY"""
+    """Update a product with ImgBB image URLs - ADMIN ONLY"""
     try:
         # Check if product exists
         existing_product = firebase_service.get_document("products", product_id)
@@ -192,11 +195,13 @@ async def update_product(
 
         # Parse image URLs if provided
         images_list = None
-        if image_urls:
-            import json
+        if image_urls is not None:
             try:
                 images_list = json.loads(image_urls)
-            except:
+                if not isinstance(images_list, list):
+                    images_list = None
+            except Exception as e:
+                logger.error(f"Error parsing image_urls: {e}")
                 images_list = None
 
         # Create form data model
@@ -217,12 +222,19 @@ async def update_product(
         # Convert to ProductUpdate
         product_update = form_data.to_product_update(images_list)
 
-        # Prepare update data
-        update_data = {k: v for k, v in product_update.model_dump().items() if v is not None}
+        # Prepare update data - only include non-None values
+        update_data = {}
+        product_update_dict = product_update.model_dump()
+        
+        for key, value in product_update_dict.items():
+            if value is not None:
+                update_data[key] = value
+        
+        # Always update these fields
         update_data["updated_at"] = datetime.now()
         update_data["updated_by"] = current_admin["email"]
 
-        # Update product
+        # Update product in Firestore
         firebase_service.update_document("products", product_id, update_data)
         logger.info(f"Product updated by admin {current_admin['email']}: {product_id}")
 
@@ -236,7 +248,7 @@ async def update_product(
         logger.error(f"Error updating product {product_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error updating product"
+            detail=f"Error updating product: {str(e)}"
         )
 
 @router.delete("/{product_id}")
@@ -254,10 +266,10 @@ async def delete_product(
                 detail="Product not found"
             )
 
-        # ✅ Note: Images remain in Firebase Storage
-        # You can optionally delete them from Firebase Storage using Firebase Admin SDK
+        # Note: Images remain in ImgBB (they don't expire unless you delete them manually)
+        # ImgBB free tier keeps images indefinitely
         
-        # Delete product from Firebase
+        # Delete product from Firestore
         firebase_service.delete_document("products", product_id)
         logger.info(f"Product deleted by admin {current_admin['email']}: {product_id}")
 
