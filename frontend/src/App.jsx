@@ -2,19 +2,12 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 
-// Authentication Components
-import LoginPage from './components/auth/LoginPage';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-
 // Layout Components
 import Header from './components/Header';
 import Footer from './components/Footer';
-import AdminHeader from './components/layout/AdminHeader';
-import AddProductPage from "./pages/admin/AddProductPage";
 
 // Page Components
 import Index from './pages/Index';
-import AdminPage from './pages/AdminPage';
 import CollectionsPage from './pages/CollectionsPage';
 import CategoryPage from './pages/CategoryPage';
 import ProductDetailPage from './pages/ProductDetailPage'; // ✅ ADD THIS IMPORT
