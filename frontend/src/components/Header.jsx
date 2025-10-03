@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Menu, X, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
 
 const categories = [
   { name: 'Shirts', path: '/category/shirts' },
@@ -8,11 +9,6 @@ const categories = [
   { name: 'Trending', path: '/category/trending' },
 ];
 
-function useCart() {
-  const [items] = React.useState([{ id: 1, quantity: 2 }, { id: 2, quantity: 1 }]);
-  const getTotalItems = () => items.reduce((acc, item) => acc + item.quantity, 0);
-  return { getTotalItems };
-}
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -323,7 +319,6 @@ export default function Header() {
           <Link to="/" style={styles.logo} className="logo" onClick={closeMenu}>
             BOLT FIT
           </Link>
-
           {/* Desktop/Tablet Navigation */}
           <nav style={styles.nav}>
             <Link
@@ -356,12 +351,10 @@ export default function Header() {
           <div style={styles.rightSection}>
             {/* Cart Button */}
             <button style={styles.cartButton} className="cart-button">
-              <ShoppingCart size={isMobile ? 20 : 24} />
-              {getTotalItems() > 0 && (
-                <span style={styles.cartBadge}>
-                  {getTotalItems()}
-                </span>
-              )}
+              <Link to="/cart">
+              <ShoppingCart size={24} />
+              {getTotalItems() > 0 && <span>{getTotalItems()}</span>}
+            </Link>
             </button>
 
             {/* Mobile Menu Button */}

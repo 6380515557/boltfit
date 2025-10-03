@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
 
 // Layout Components
 import Header from './components/Header';
@@ -12,6 +13,7 @@ import CollectionsPage from './pages/CollectionsPage';
 import CategoryPage from './pages/CategoryPage';
 import ProductDetailPage from './pages/ProductDetailPage'; // ✅ ADD THIS IMPORT
 import CustomerDetailsPage from './pages/CustomerDetailsPage';
+import AddToCartPage from './pages/AddToCartPage';
 
 // Add spinner CSS
 const spinnerCSS = `
@@ -30,21 +32,21 @@ if (typeof document !== 'undefined') {
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<><Header /><Index /><Footer /></>} />
-          <Route path="/collections" element={<><Header /><CollectionsPage /><Footer /></>} />
-          <Route path="/category/:name" element={<><Header /><CategoryPage /><Footer /></>} />
-          
-          {/* ✅ ADD THIS ROUTE FOR PRODUCT DETAIL PAGE */}
-          <Route path="/product/:id" element={<><Header /><ProductDetailPage /><Footer /></>} />
-          <Route path="/customer-details" element={<CustomerDetailsPage />} />
-        
-          {/* Catch all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+      <CartProvider> {/* Wrap the whole app here */}
+        <Router>
+          <Header />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/collections" element={<CollectionsPage />} />
+            <Route path="/category/:name" element={<CategoryPage />} />
+            <Route path="/product/:id" element={<ProductDetailPage />} />
+            <Route path="/customer-details" element={<CustomerDetailsPage />} />
+            <Route path="/cart" element={<AddToCartPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+          <Footer />
+        </Router>
+      </CartProvider>
     </AuthProvider>
   );
 }

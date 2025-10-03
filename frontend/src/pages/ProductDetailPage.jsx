@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Star, Check, ShoppingCart, Plus, Minus, Send, Shield, Truck, RotateCcw, AlertTriangle } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 const API_BASE_URL = "https://boltfit-backend-r4no.onrender.com/api/v1";
 
@@ -105,14 +106,25 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [id]);
 
-  const handleAddToCart = () => {
+  const { addToCart } = useCart();
+
+  function handleAddToCart() {
     if (!selectedSize || !selectedColor) {
-      setError('Please select size and color');
+      setError("Please select size and color");
       return;
     }
-    setShowSuccess('Added to cart successfully!');
-    setTimeout(() => setShowSuccess(''), 3000);
-  };
+    addToCart({
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      image: mainImage,
+      selectedSize,
+      selectedColor,
+      quantity
+    });
+  setShowSuccess("Added to cart successfully!");
+  setTimeout(() => setShowSuccess(null), 3000);
+}
   // Add this new function after your existing handleAddToCart function
   const handleBuyNow = () => {
     if (!selectedSize || !selectedColor) {
