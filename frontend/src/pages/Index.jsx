@@ -7,39 +7,37 @@ import {
   Truck,
   Shield,
   Award,
-  Instagram,
-  ArrowRight,
   Loader,
 } from 'lucide-react';
 
 const APIBASEURL = "https://boltfit-backend-r4no.onrender.com/api/v1";
 
-export default function Index() {
-  const [offerItems, setOfferItems] = useState([]);
-  const [bestPriceItems, setBestPriceItems] = useState([]);
-  const [shirtItems, setShirtItems] = useState([]);
+export default function EcommerceIndex() {
+  const [trendingItems, setTrendingItems] = useState([]);
+  const [lowestPriceItems, setLowestPriceItems] = useState([]);
+  const [shirtsPantsItems, setShirtsPantsItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Hero images
   const heroImages = [
-    'https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=800&h=1000&fit=crop',
-    'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=800&h=1000&fit=crop',
-    'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=1000&fit=crop',
+    'https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=1200&h=800&fit=crop',
+    'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=1200&h=800&fit=crop',
+    'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1200&h=800&fit=crop',
   ];
 
   useEffect(() => {
     async function fetchProducts() {
       try {
         setLoading(true);
-        const [offersRes, bestPriceRes, shirtsRes] = await Promise.all([
-          fetch(`${APIBASEURL}/products?category=T-Shirts&perpage=8&isactive=true`),
-          fetch(`${APIBASEURL}/products?category=Pants&perpage=8&isactive=true`),
+        const [trendingRes, lowestPriceRes, shirtsPantsRes] = await Promise.all([
+          fetch(`${APIBASEURL}/products?category=T-Shirts&perpage=12&isactive=true`),
+          fetch(`${APIBASEURL}/products?category=Pants&perpage=12&isactive=true`),
           fetch(`${APIBASEURL}/products?category=Shirts&perpage=8&isactive=true`),
         ]);
 
-        const offersData = offersRes.ok ? await offersRes.json() : { products: [] };
-        const bestPriceData = bestPriceRes.ok ? await bestPriceRes.json() : { products: [] };
-        const shirtsData = shirtsRes.ok ? await shirtsRes.json() : { products: [] };
+        const trendingData = trendingRes.ok ? await trendingRes.json() : { products: [] };
+        const lowestPriceData = lowestPriceRes.ok ? await lowestPriceRes.json() : { products: [] };
+        const shirtsPantsData = shirtsPantsRes.ok ? await shirtsPantsRes.json() : { products: [] };
 
         const filterDuplicates = (products) => {
           const seenIds = new Set();
@@ -61,19 +59,19 @@ export default function Index() {
               : 0,
             image: product.images && product.images.length > 0 
               ? product.images[0] 
-              : 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=300&fit=crop',
+              : 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop',
             rating: 4.5,
           }));
         };
 
-        setOfferItems(transform(filterDuplicates(offersData.products || [])));
-        setBestPriceItems(transform(filterDuplicates(bestPriceData.products || [])));
-        setShirtItems(transform(filterDuplicates(shirtsData.products || [])));
+        setTrendingItems(transform(filterDuplicates(trendingData.products || [])));
+        setLowestPriceItems(transform(filterDuplicates(lowestPriceData.products || [])));
+        setShirtsPantsItems(transform(filterDuplicates(shirtsPantsData.products || [])));
       } catch (error) {
         console.error("Error fetching products", error);
-        setOfferItems([]);
-        setBestPriceItems([]);
-        setShirtItems([]);
+        setTrendingItems([]);
+        setLowestPriceItems([]);
+        setShirtsPantsItems([]);
       } finally {
         setLoading(false);
       }
@@ -85,7 +83,7 @@ export default function Index() {
     console.log('Navigate to:', path);
   };
 
-  const ScrollableSection = ({ title, items, showViewAll = false }) => {
+  const ScrollableSection = ({ title, items }) => {
     const scrollRef = useRef(null);
 
     const scroll = (direction) => {
@@ -100,47 +98,37 @@ export default function Index() {
 
     if (items.length === 0) {
       return (
-        <div className="mb-12 px-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">{title}</h2>
-          <div className="text-center py-12 text-gray-500">No products available</div>
+        <div className="mb-8 px-4">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">{title}</h2>
+          <div className="text-center py-8 text-gray-500">No products available</div>
         </div>
       );
     }
 
     return (
-      <div className="mb-12">
-        <div className="flex justify-between items-center mb-6 px-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">{title}</h2>
-          <div className="flex items-center gap-3">
-            {showViewAll && (
-              <button className="text-sm text-blue-600 font-semibold hover:text-blue-700 transition-colors">
-                View All
-              </button>
-            )}
-            <div className="hidden md:flex gap-2">
-              <button
-                onClick={() => scroll('left')}
-                className="w-10 h-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center hover:border-blue-500 hover:text-blue-600 transition-all shadow-md hover:shadow-lg"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <button
-                onClick={() => scroll('right')}
-                className="w-10 h-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center hover:border-blue-500 hover:text-blue-600 transition-all shadow-md hover:shadow-lg"
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-4 px-4">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900">{title}</h2>
+          <div className="hidden md:flex gap-2">
+            <button
+              onClick={() => scroll('left')}
+              className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center hover:border-red-500 hover:text-red-600 transition-all shadow-md hover:shadow-lg"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              className="w-10 h-10 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center hover:border-red-500 hover:text-red-600 transition-all shadow-md hover:shadow-lg"
+              aria-label="Scroll right"
+            >
+              <ChevronRight size={20} />
+            </button>
           </div>
         </div>
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto px-4 pb-4"
-          style={{ 
-            scrollbarWidth: 'none', 
-            msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch'
-          }}
+          className="flex gap-4 overflow-x-auto px-4 pb-4 scrollbar-hide"
         >
           {items.map((product) => (
             <div
@@ -154,7 +142,7 @@ export default function Index() {
                   alt={product.title}
                   className="absolute top-0 left-0 w-full h-full object-cover"
                   onError={(e) => {
-                    e.target.src = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=300&fit=crop';
+                    e.target.src = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop';
                   }}
                 />
                 {product.discount > 0 && (
@@ -194,19 +182,18 @@ export default function Index() {
   const GridSection = ({ title, items }) => {
     if (items.length === 0) {
       return (
-        <div className="mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">{title}</h2>
-          <div className="text-center py-12 text-gray-500">No products available</div>
+        <div className="mb-8">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">{title}</h2>
+          <div className="text-center py-8 text-gray-500">No products available</div>
         </div>
       );
     }
 
-    // Show only 8 items (4 per row on desktop, 2 per row on mobile)
     const displayItems = items.slice(0, 8);
 
     return (
-      <div className="mb-12">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">{title}</h2>
+      <div className="mb-8">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">{title}</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {displayItems.map((product) => (
             <div
@@ -220,7 +207,7 @@ export default function Index() {
                   alt={product.title}
                   className="absolute top-0 left-0 w-full h-full object-cover"
                   onError={(e) => {
-                    e.target.src = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=300&fit=crop';
+                    e.target.src = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop';
                   }}
                 />
                 {product.discount > 0 && (
@@ -259,7 +246,7 @@ export default function Index() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <Loader className="w-12 h-12 animate-spin text-red-600 mx-auto mb-4" />
           <p className="text-gray-600 text-lg">Loading amazing products...</p>
         </div>
       </div>
@@ -269,84 +256,69 @@ export default function Index() {
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 md:py-12">
-        <div className="max-w-7xl mx-auto px-4">
-          {/* Hero Images */}
-          <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
-            {heroImages.map((img, idx) => (
-              <div
-                key={idx}
-                className="relative w-full pt-[133%] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105"
-              >
-                <img
-                  src={img}
-                  alt={`Fashion ${idx + 1}`}
-                  className="absolute top-0 left-0 w-full h-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
-
-          {/* Category Buttons */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
+      <section className="relative w-full">
+        <div className="grid grid-cols-1 md:grid-cols-3 w-full">
+          {heroImages.map((img, idx) => (
+            <div
+              key={idx}
+              className="relative w-full h-64 md:h-96 overflow-hidden"
+            >
+              <img
+                src={img}
+                alt={`Fashion collection ${idx + 1}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+        
+        {/* Overlay Buttons */}
+        <div className="absolute inset-0 flex items-end justify-center pb-6 md:pb-10">
+          <div className="flex gap-4 md:gap-6 px-4">
             <button
               onClick={() => handleNavigate('/category/topwear')}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 md:py-5 px-6 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+              className="bg-red-600 hover:bg-red-700 text-white py-3 md:py-4 px-6 md:px-10 rounded-xl font-bold text-sm md:text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
             >
-              <ShoppingBag size={24} />
+              <ShoppingBag size={20} />
               Top Wear
             </button>
             <button
               onClick={() => handleNavigate('/category/bottomwear')}
-              className="bg-gradient-to-r from-purple-600 to-purple-700 text-white py-4 md:py-5 px-6 rounded-xl font-bold text-base md:text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+              className="bg-purple-600 hover:bg-purple-700 text-white py-3 md:py-4 px-6 md:px-10 rounded-xl font-bold text-sm md:text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
             >
-              <ShoppingBag size={24} />
+              <ShoppingBag size={20} />
               Bottom Wear
             </button>
           </div>
-
-          {/* Instagram Section */}
-          <div className="text-center mb-8">
-            <a
-              href="https://instagram.com/boltfit"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white px-6 md:px-8 py-3 md:py-4 rounded-full font-semibold text-base md:text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-            >
-              <Instagram size={24} />
-              Follow us on Instagram
-              <ArrowRight size={20} />
-            </a>
-          </div>
         </div>
       </section>
 
-      {/* Offer Items - Scrollable */}
-      <section className="py-8 md:py-12">
-        <div className="max-w-7xl mx-auto">
-          <ScrollableSection title="🔥 Special Offers" items={offerItems} showViewAll={true} />
-        </div>
-      </section>
-
-      {/* Best Price Items - Scrollable */}
+      {/* Trending Products - Scrollable */}
       <section className="py-8 md:py-12 bg-white">
         <div className="max-w-7xl mx-auto">
-          <ScrollableSection title="💰 Best Lowest Price" items={bestPriceItems} showViewAll={true} />
+          <ScrollableSection title="🔥 Trending Products" items={trendingItems} />
         </div>
       </section>
 
-      {/* Shirt Collection - Grid (8 items: 4x2 on desktop, 2x4 on mobile) */}
+      {/* Lowest Price Products - Scrollable */}
       <section className="py-8 md:py-12">
+        <div className="max-w-7xl mx-auto">
+          <ScrollableSection title="💰 Lowest Price Products" items={lowestPriceItems} />
+        </div>
+      </section>
+
+      {/* Shirts and Pants - Grid (8 items: 4x2 on desktop, 2x4 on mobile) */}
+      <section className="py-8 md:py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4">
-          <GridSection title="👔 Premium Shirt Collection" items={shirtItems} />
+          <GridSection title="👔 Shirts and Pants Collection" items={shirtsPantsItems} />
         </div>
       </section>
 
       {/* Trust Section */}
-      <section className="py-12 md:py-16 bg-gradient-to-br from-blue-600 to-purple-700">
+      <section className="py-12 md:py-16 bg-gradient-to-br from-red-600 to-purple-700">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-2xl md:text-4xl font-bold text-white text-center mb-10 md:mb-12">
-            Why Choose BOLT FIT?
+            Why Shop With Us?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 md:p-8 text-center hover:bg-white/20 transition-all duration-300 transform hover:scale-105">
@@ -389,11 +361,11 @@ export default function Index() {
       </section>
 
       <style jsx>{`
-        div[style*="scrollbarWidth"] {
+        .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
-        div[style*="scrollbarWidth"]::-webkit-scrollbar {
+        .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }
       `}</style>
