@@ -23,7 +23,7 @@ app.add_middleware(
         "https://boldfit-admin.onrender.com",
         "https://boldfit-g24k.onrender.com",
         "http://localhost:3000",  # Vite default port
-        "http://127.0.0.1:5173"
+        "http://localhost:5173"
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
