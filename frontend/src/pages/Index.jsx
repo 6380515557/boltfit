@@ -1,313 +1,402 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Star,
-  ShoppingBag,
-  Users,
-  Award,
-  Truck,
-  ArrowRight,
-  Shirt,
-  Package,
-} from 'lucide-react';
-import './styles.css';  // Importing extracted CSS file
+import { Heart, ChevronRight, Truck, Award, Shield, TrendingUp } from 'lucide-react';
+import './styles.css';
 
-const APIBASEURL = "https://boltfit-backend-r4no.onrender.com/api/v1";
+const API_BASE_URL = "https://boltfit-backend-r4no.onrender.com/api/v1";
 
-export default function Index() {
+export default function HomePage() {
   const navigate = useNavigate();
-
-  const newShirts = Array.from({ length: 8 }, (_, i) => ({
-    id: i + 1,
-    title: `Premium Shirt ${i + 1}`,
-    price: 899 + i * 100,
-    originalPrice: 1299 + i * 150,
-    image: `https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=300&fit=crop&randi=${i}`,
-    rating: 4.5,
-    discount: 30,
-  }));
-
-  const tshirtCollections = Array.from({ length: 8 }, (_, i) => ({
-    id: i + 1,
-    title: `Premium T-Shirt ${i + 1}`,
-    price: 599 + i * 75,
-    originalPrice: 899 + i * 100,
-    image: `https://images.unsplash.com/photo-1583743814966-8936f37f1173?w=300&h=300&fit=crop&randi=${i}`,
-    rating: 4.6,
-    discount: 35,
-  }));
-
-  const newPants = Array.from({ length: 8 }, (_, i) => ({
-    id: i + 1,
-    title: `Premium Pants ${i + 1}`,
-    price: 1299 + i * 200,
-    originalPrice: 1899 + i * 250,
-    image: `https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=300&fit=crop&randi=${i}`,
-    rating: 4.3,
-    discount: 25,
-  }));
-
-  const [apiProducts, setApiProducts] = useState({
-    shirts: newShirts,
-    tshirts: tshirtCollections,
-    pants: newPants,
-  });
+  const [products, setProducts] = useState([]);
+  const [bestSellers, setBestSellers] = useState([]);
+  const [trendingProducts, setTrendingProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [wishlist, setWishlist] = useState([]);
 
+  // Fetch products from API
   useEffect(() => {
-    async function fetchProducts() {
+    const fetchAllProducts = async () => {
       try {
         setLoading(true);
-        const [shirtsRes, tshirtsRes, pantsRes] = await Promise.all([
-          fetch(`${APIBASEURL}/products?category=Shirts&perpage=8&isactive=true`),
-          fetch(`${APIBASEURL}/products?category=T-Shirts&perpage=8&isactive=true`),
-          fetch(`${APIBASEURL}/products?category=Pants&perpage=8&isactive=true`),
-        ]);
-        const shirtsData = shirtsRes.ok ? await shirtsRes.json() : { products: [] };
-        const tshirtsData = tshirtsRes.ok ? await tshirtsRes.json() : { products: [] };
-        const pantsData = pantsRes.ok ? await pantsRes.json() : { products: [] };
-
-        const filterDuplicates = (products) => {
-          const seenIds = new Set();
-          return products.filter(product => {
-            if (seenIds.has(product.id)) return false;
-            seenIds.add(product.id);
-            return true;
-          });
-        };
-
-        const filteredShirts = filterDuplicates(shirtsData.products);
-        const filteredTshirts = filterDuplicates(tshirtsData.products);
-        const filteredPants = filterDuplicates(pantsData.products);
-
-        const transform = (products, fallback) => (products.length > 0 ? products.map((product, i) => ({
-          id: product.id,
-          title: product.name,
-          price: product.price,
-          originalPrice: product.originalprice,
-          discount: product.originalprice ? Math.round((product.originalprice - product.price) / product.originalprice * 100) : 30,
-          image: product.images && product.images.length > 0 ? product.images[0] : fallback[i]?.image || fallback[0].image,
-          rating: 4.5,
-        })) : fallback);
-
-        setApiProducts({
-          shirts: transform(filteredShirts, newShirts),
-          tshirts: transform(filteredTshirts, tshirtCollections),
-          pants: transform(filteredPants, newPants),
-        });
+        
+        // Fetch all products
+        const allProductsResponse = await fetch(
+          `${API_BASE_URL}/products/?is_active=true&per_page=50`
+        );
+        
+        if (allProductsResponse.ok) {
+          const allData = await allProductsResponse.json();
+          const transformedProducts = transformProducts(allData.products);
+          
+          setProducts(transformedProducts);
+          
+          // Filter best sellers (featured products)
+          const featured = transformedProducts.filter(p => p.isFeatured);
+          setBestSellers(featured.length > 0 ? featured : transformedProducts.slice(0, 8));
+          
+          // Filter trending products
+          const trending = transformedProducts.filter(p => p.isTrending);
+          setTrendingProducts(trending.length > 0 ? trending : transformedProducts.slice(0, 8));
+        }
       } catch (error) {
-        console.error("Error fetching products", error);
-        setApiProducts({
-          shirts: newShirts,
-          tshirts: tshirtCollections,
-          pants: newPants,
-        });
+        console.error('Error fetching products:', error);
+        // Fallback to mock data if API fails
+        const mockProducts = generateMockProducts();
+        setProducts(mockProducts);
+        setBestSellers(mockProducts.slice(0, 8));
+        setTrendingProducts(mockProducts.slice(8, 16));
       } finally {
         setLoading(false);
       }
-    }
-    fetchProducts();
-  }, []);
-
-  // ScrollableSection Component
-  const ScrollableSection = ({ title, items, delay = 0 }) => {
-    const scrollContainer = useRef(null);
-
-    const scroll = (direction) => {
-      const container = scrollContainer.current;
-      const scrollAmount = 320;
-      if (container) {
-        container.scrollBy({
-          left: direction === 'left' ? -scrollAmount : scrollAmount,
-          behavior: 'smooth',
-        });
-      }
     };
 
-    return (
-      <div className="scroll-section" style={{ animationDelay: `${delay}s` }}>
-        <div className="scroll-header">
-          <h3 className="scroll-title">{title}</h3>
-          <div className="scroll-controls">
-            <button onClick={() => scroll('left')} className="scroll-btn">
-              <ChevronLeft size={20} />
-            </button>
-            <button onClick={() => scroll('right')} className="scroll-btn">
-              <ChevronRight size={20} />
+    fetchAllProducts();
+  }, []);
+
+  // Transform API products to app format
+  const transformProducts = (apiProducts) => {
+    return apiProducts.map((product, index) => ({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.original_price || (product.price + Math.floor(Math.random() * 500) + 200),
+      images: product.images && product.images.length > 0 
+        ? product.images 
+        : [`https://images.unsplash.com/photo-${1520000000000 + index}?w=400&h=400&fit=crop&auto=format&q=80`],
+      rating: (Math.random() * 1.5 + 3.5).toFixed(1),
+      reviewsCount: Math.floor(Math.random() * 500) + 25,
+      isFeatured: product.is_featured || Math.random() > 0.7,
+      isTrending: Math.random() > 0.6,
+      discount: product.original_price 
+        ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
+        : Math.floor(Math.random() * 40) + 15,
+      inStock: Math.random() > 0.1,
+      brand: product.brand || 'BOLDFIT',
+      category: product.category || 'Shirts'
+    }));
+  };
+
+  // Generate mock products as fallback
+  const generateMockProducts = () => {
+    const categories = ['Shirts', 'Pants', 'T-Shirts', 'Jackets'];
+    const names = ['Premium', 'Classic', 'Modern', 'Luxury', 'Sport', 'Elite', 'Pro', 'Essential'];
+    
+    return Array.from({ length: 24 }, (_, i) => ({
+      id: `product-${i + 1}`,
+      name: `${names[i % names.length]} ${categories[i % categories.length]} ${i + 1}`,
+      price: Math.floor(Math.random() * 2000) + 599,
+      originalPrice: Math.floor(Math.random() * 2500) + 1200,
+      images: [`https://images.unsplash.com/photo-${1520000000000 + i}?w=400&h=400&fit=crop&auto=format&q=80`],
+      rating: (Math.random() * 1.5 + 3.5).toFixed(1),
+      reviewsCount: Math.floor(Math.random() * 500) + 25,
+      isFeatured: Math.random() > 0.6,
+      isTrending: Math.random() > 0.5,
+      discount: Math.floor(Math.random() * 40) + 15,
+      inStock: Math.random() > 0.1,
+      brand: 'BOLDFIT',
+      category: categories[i % categories.length]
+    }));
+  };
+
+  // Categories data
+  const categories = [
+    { 
+      name: 'Shirts', 
+      slug: 'shirts',
+      img: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300&h=200&fit=crop&auto=format&q=80',
+      description: 'Premium formal & casual shirts'
+    },
+    { 
+      name: 'Pants', 
+      slug: 'pants',
+      img: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=300&h=200&fit=crop&auto=format&q=80',
+      description: 'Comfortable & stylish bottoms'
+    },
+    { 
+      name: 'T-Shirts', 
+      slug: 't-shirts',
+      img: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=200&fit=crop&auto=format&q=80',
+      description: 'Casual everyday essentials'
+    },
+    { 
+      name: 'Trending', 
+      slug: 'trending',
+      img: 'https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?w=300&h=200&fit=crop&auto=format&q=80',
+      description: 'Latest fashion trends'
+    }
+  ];
+
+  // Toggle wishlist
+  const toggleWishlist = (productId) => {
+    setWishlist(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  // Navigate to category
+  const handleCategoryClick = (slug) => {
+    navigate(`/category/${slug}`);
+  };
+
+  // Navigate to product details
+  const handleProductClick = (productId) => {
+    navigate(`/product/${productId}`);
+  };
+
+  // Product Card Component
+  const ProductCard = ({ product }) => (
+    <div className="product-card" onClick={() => handleProductClick(product.id)}>
+      {!product.inStock && <div className="out-of-stock-label">Out of Stock</div>}
+      {product.discount > 0 && (
+        <div className="discount-badge">-{product.discount}%</div>
+      )}
+      {product.isTrending && (
+        <div className="trending-badge">
+          <TrendingUp size={12} /> HOT
+        </div>
+      )}
+      
+      <button 
+        className={`wishlist-btn ${wishlist.includes(product.id) ? 'active' : ''}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleWishlist(product.id);
+        }}
+      >
+        <Heart size={18} fill={wishlist.includes(product.id) ? 'currentColor' : 'none'} />
+      </button>
+
+      <div className="product-image-container">
+        <img src={product.images[0]} alt={product.name} className="product-image" />
+      </div>
+
+      <div className="product-content">
+        <div className="product-brand">{product.brand}</div>
+        <h3 className="product-title">{product.name}</h3>
+        
+        <div className="product-rating">
+          <div className="stars">
+            {'★'.repeat(Math.floor(parseFloat(product.rating)))}
+            {'☆'.repeat(5 - Math.floor(parseFloat(product.rating)))}
+          </div>
+          <span className="rating-text">({product.rating})</span>
+        </div>
+
+        <div className="product-price">
+          <span className="current-price">₹{product.price.toLocaleString()}</span>
+          {product.originalPrice > product.price && (
+            <span className="original-price">₹{product.originalPrice.toLocaleString()}</span>
+          )}
+        </div>
+
+        <button className="add-to-cart-btn" onClick={(e) => e.stopPropagation()}>
+          Add to Cart
+        </button>
+      </div>
+    </div>
+  );
+
+  // Product Grid Section Component
+  const ProductGridSection = ({ title, subtitle, products, showViewAll = false }) => (
+    <section className="product-section">
+      <div className="section-header">
+        <div>
+          <h2 className="section-title">{title}</h2>
+          {subtitle && <p className="section-subtitle">{subtitle}</p>}
+        </div>
+        {showViewAll && (
+          <button className="view-all-btn" onClick={() => navigate('/products')}>
+            View All <ChevronRight size={20} />
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading products...</p>
+        </div>
+      ) : (
+        <div className="product-grid">
+          {products.slice(0, 8).map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+
+  return (
+    <div className="homepage">
+      {/* Hero Banner */}
+      <section className="hero-section">
+        <div className="hero-overlay">
+          <div className="hero-content">
+            <h1 className="hero-title">
+              <span className="hero-brand">BOLDFIT</span>
+              <span className="hero-tagline">Where Style Meets Performance</span>
+            </h1>
+            <p className="hero-description">
+              Premium activewear designed for the bold and unstoppable
+            </p>
+            <button className="hero-cta" onClick={() => navigate('/products')}>
+              Shop Collection <ChevronRight size={20} />
             </button>
           </div>
         </div>
-        <div ref={scrollContainer} className="scroll-container">
-          {items.map((product, index) => (
-            <div
-              key={product.id}
-              className="product-card"
-              style={{ animationDelay: `${delay + index * 0.1}s` }}
-              onClick={() => navigate(`/product/${product.id}`)}
+        <img 
+          src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1800&h=600&fit=crop&auto=format&q=80" 
+          alt="BoldFit Hero" 
+          className="hero-image"
+        />
+      </section>
+
+      {/* Categories Section */}
+      <section className="categories-section">
+        <div className="section-header-center">
+          <h2 className="section-title">Explore Collections</h2>
+          <p className="section-subtitle">Discover our curated range of premium products</p>
+        </div>
+
+        <div className="categories-grid">
+          {categories.map((category) => (
+            <div 
+              key={category.slug} 
+              className="category-card"
+              onClick={() => handleCategoryClick(category.slug)}
             >
-              <div className="product-image-container">
-                <img src={product.image} alt={product.title} className="product-image" />
-                <div className="product-discount">{product.discount} OFF</div>
+              <div className="category-image-container">
+                <img src={category.img} alt={category.name} className="category-image" />
+                <div className="category-overlay">
+                  <span className="category-cta">Shop Now</span>
+                </div>
               </div>
-              <div className="product-info">
-                <h4 className="product-title">{product.title}</h4>
-                <div className="product-rating">
-                  <Star size={12} fill="#fbbf24" color="#fbbf24" />
-                  <span className="rating-text">{product.rating}</span>
-                </div>
-                <div className="product-pricing">
-                  <span className="product-price">${product.price}</span>
-                  <span className="product-original-price">${product.originalPrice}</span>
-                </div>
+              <div className="category-content">
+                <h3 className="category-name">{category.name}</h3>
+                <p className="category-description">{category.description}</p>
               </div>
             </div>
           ))}
         </div>
-      </div>
-    );
-  };
+      </section>
 
-  // PassionSection Component
-  const PassionSection = ({ text, delay = 0 }) => (
-    <div className="passion-section" style={{ animationDelay: `${delay}s` }}>
-      <div className="passion-container">
-        <div className="passion-line"></div>
-        <h2 className="passion-text">{text}</h2>
-        <div className="passion-line"></div>
-      </div>
-      <p className="passion-subtext">Crafted with love, designed for excellence</p>
-    </div>
-  );
+      {/* Style Essentials Section */}
+      <ProductGridSection 
+        title="Style Essentials"
+        subtitle="Refresh your wardrobe with trendy essentials"
+        products={products}
+        showViewAll={true}
+      />
 
-  // StatsSection Component
-  const StatsSection = () => (
-    <div className="stats-section">
-      <div className="stats-container">
-        <h2 className="stats-title">Why Choose BOLT FIT?</h2>
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon"><ShoppingBag size={32} /></div>
-            <div className="stat-number">50K</div>
-            <div className="stat-label">Products Sold</div>
+      {/* Video Section */}
+      <section className="video-section">
+        <div className="video-container">
+          <video 
+            className="promo-video"
+            autoPlay 
+            muted 
+            loop 
+            playsInline
+          >
+            <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
+          </video>
+          <div className="video-overlay">
+            <h2>Experience BoldFit</h2>
+            <p>Where fitness meets fashion</p>
           </div>
-          <div className="stat-card">
-            <div className="stat-icon"><Users size={32} /></div>
-            <div className="stat-number">25K</div>
-            <div className="stat-label">Happy Customers</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon"><Award size={32} /></div>
-            <div className="stat-number">4.8</div>
-            <div className="stat-label">Average Rating</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon"><Truck size={32} /></div>
-            <div className="stat-number">99</div>
-            <div className="stat-label">On-Time Delivery</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // AnimatedDesign Component
-  const AnimatedDesign = () => (
-    <div className="animated-container">
-      {/* Floating Icons */}
-      <div className="floating-icon-1"><Shirt size={40} color="#3b82f6" /></div>
-      <div className="floating-icon-2"><Package size={32} color="#8b5cf6" /></div>
-      <div className="floating-icon-3"><ShoppingBag size={36} color="#06b6d4" /></div>
-      {/* Animated Circles */}
-      <div className="animated-circle-1"></div>
-      <div className="animated-circle-2"></div>
-      <div className="animated-circle-3"></div>
-      {/* Central Design Elements */}
-      <div className="central-element">
-        <div className="inner-circle">
-          <Star size={60} fill="#3b82f6" color="#3b82f6"/>
-        </div>
-      </div>
-      {/* Animated Shapes */}
-      <div className="shape-1"></div>
-      <div className="shape-2"></div>
-      <div className="shape-3"></div>
-      {/* Gradient Orbs */}
-      <div className="gradient-orb-1"></div>
-      <div className="gradient-orb-2"></div>
-    </div>
-  );
-
-  return (
-    <>
-      {/* Hero Section */}
-      <section className="hero-section">
-        <div className="background-shapes">
-          <div className="circle1"></div>
-          <div className="circle2"></div>
-        </div>
-        <div className="left-content">
-          <div className="badge"><Star size={16} fill="currentColor" /> Premium Mens Fashion</div>
-          <h1 className="main-heading">
-            <span className="elevate-text">Elevate Your</span><br />
-            <span className="style-game-text">Style Game</span>
-          </h1>
-          <p className="description">
-            Discover premium mens clothing that combines comfort, style, and affordability. From casual wear to trending fashion.
-          </p>
-          <div className="button-container">
-            <button
-              className="shop-now-button"
-              onClick={() => navigate('category/trending')}
-            >
-              Shop Now <ArrowRight size={16} />
-            </button>
-            <button
-              className="view-collection-button"
-              onClick={() => {
-                const collectionsSection = document.getElementById('collections');
-                if (collectionsSection) {
-                  collectionsSection.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-            >
-              View Collection
-            </button>
-          </div>
-          <div className="stats-container">
-            <div className="stat-item">
-              <Star className="stat-icon" size={20} fill="currentColor" />
-              <span className="stat-text">4.85 Rating</span>
-            </div>
-            <div className="stat-item">
-              <Users className="stat-icon" size={20} color="#10b981" />
-              <span className="stat-text">1000 Happy Customers</span>
-            </div>
-            <div className="stat-item">
-              <Truck className="stat-icon" size={20} color="#3b82f6" />
-              <span className="stat-text">Fast Delivery</span>
-            </div>
-          </div>
-        </div>
-        <div className="right-content">
-          <AnimatedDesign />
         </div>
       </section>
 
-      {/* Collections Section */}
-      <section id="collections" className="collections-section">
-        <div className="collections-container">
-          <ScrollableSection title="New Arrivals - Shirts" items={apiProducts.shirts} delay={0} />
-          <PassionSection text="Style Meets Passion" delay={0.3} />
-          <ScrollableSection title="T-Shirt Collections" items={apiProducts.tshirts} delay={0.6} />
-          <PassionSection text="Comfort Redefined" delay={0.9} />
-          <ScrollableSection title="Premium Pants Collection" items={apiProducts.pants} delay={1.2} />
+      {/* Best Sellers Section */}
+      <ProductGridSection 
+        title="Best Sellers"
+        subtitle="Wardrobe must-have essentials"
+        products={bestSellers}
+        showViewAll={true}
+      />
+
+      {/* Trending Section */}
+      <ProductGridSection 
+        title="Trending Now"
+        subtitle="What's hot this season"
+        products={trendingProducts}
+        showViewAll={true}
+      />
+
+      {/* Features Bar */}
+      <section className="features-section">
+        <div className="features-grid">
+          <div className="feature-item">
+            <div className="feature-icon">
+              <Truck size={32} />
+            </div>
+            <h3 className="feature-title">Free Shipping</h3>
+            <p className="feature-description">On orders above ₹999</p>
+          </div>
+          
+          <div className="feature-item">
+            <div className="feature-icon">
+              <Shield size={32} />
+            </div>
+            <h3 className="feature-title">Secure Payment</h3>
+            <p className="feature-description">100% secure transactions</p>
+          </div>
+          
+          <div className="feature-item">
+            <div className="feature-icon">
+              <Award size={32} />
+            </div>
+            <h3 className="feature-title">Premium Quality</h3>
+            <p className="feature-description">Certified products</p>
+          </div>
+          
+          <div className="feature-item">
+            <div className="feature-icon">
+              <TrendingUp size={32} />
+            </div>
+            <h3 className="feature-title">100k+</h3>
+            <p className="feature-description">Happy customers</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Special Offer Section */}
+      <section className="offer-section">
+        <div className="offer-container">
+          <div className="offer-badge">Limited Time Offer</div>
+          <h2 className="offer-title">Buy 2 Get 1 Free!</h2>
+          <p className="offer-description">
+            Shop any 2 products and get the 3rd absolutely free. Use code: <strong>BOLD3FREE</strong>
+          </p>
+          <button className="offer-cta" onClick={() => navigate('/products')}>
+            Shop Now <ChevronRight size={20} />
+          </button>
         </div>
       </section>
 
       {/* Stats Section */}
-      <StatsSection />
-    </>
+      <section className="stats-section">
+        <div className="stats-grid">
+          <div className="stat-item">
+            <div className="stat-number">300K+</div>
+            <div className="stat-label">Social Media Followers</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-number">8+</div>
+            <div className="stat-label">Years in Industry</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-number">100K+</div>
+            <div className="stat-label">Products Sold</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-number">4.8★</div>
+            <div className="stat-label">Average Rating</div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
