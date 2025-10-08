@@ -21,7 +21,7 @@ class Settings:
     ADMIN_EMAIL_LIST: list = [
         "workingprojectjagan123@gmail.com",
         "jaganjagan37571@gmail.com",
-        "hariharanvi1310@email.com"
+        "hariharanvi1310@gmail.com"
     ]
 
     # CORS
