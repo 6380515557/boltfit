@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Filter, Grid, List, ChevronDown, Search, SlidersHorizontal, ArrowLeft, Star, Heart, ShoppingBag, Sparkles, X } from 'lucide-react';
+import { Filter, Grid, List, ChevronDown, Search, SlidersHorizontal, ArrowLeft, Star, Heart, ShoppingBag, Eye, X, TrendingUp, Award, Truck, Shield } from 'lucide-react';
+import './CategoryPage.css';
 
 const API_BASE_URL = "https://boltfit-backend-r4no.onrender.com/api/v1";
 
@@ -21,21 +22,16 @@ export default function CategoryPage() {
     rating: 0
   });
 
-  // Mobile detection with window resize handler
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
     const handleResize = () => {
-      setWindowWidth(window.innerWidth);
       setIsMobile(window.innerWidth < 768);
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  const cardWidth = isMobile ? Math.min(windowWidth * 0.44, 160) : 280;
 
   useEffect(() => {
     setLoading(true);
@@ -82,7 +78,6 @@ export default function CategoryPage() {
         }
       } catch (error) {
         console.error('Error fetching products:', error);
-        // Fallback to mock data
         const mockProducts = Array.from({ length: 16 }, (_, i) => ({
           id: `${name}-${i + 1}`,
           title: `${name.charAt(0).toUpperCase() + name.slice(1)} Premium ${['Classic', 'Modern', 'Luxury', 'Sport'][i % 4]} ${i + 1}`,
@@ -109,7 +104,6 @@ export default function CategoryPage() {
     fetchProducts();
   }, [name]);
 
-  // Filter and sort logic
   useEffect(() => {
     let filtered = [...products];
 
@@ -167,310 +161,183 @@ export default function CategoryPage() {
     { value: 'newest', label: 'Newest First' }
   ];
 
-  // Classic Professional Product Card Component
-  const ProductCard = ({ product, index }) => (
-    <div
-      key={product.id}
-      style={{
-        width: cardWidth,
-        background: '#ffffff',
-        borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        border: '1px solid #e5e7eb',
-        overflow: 'hidden',
-        transition: 'all 0.3s ease',
-        cursor: 'pointer',
-        position: 'relative',
-        margin: isMobile ? '4px' : '8px',
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
-      }}
-      onMouseEnter={(e) => {
-        if (!isMobile) {
-          e.currentTarget.style.transform = 'translateY(-4px)';
-          e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
-          e.currentTarget.style.borderColor = '#d1d5db';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isMobile) {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
-          e.currentTarget.style.borderColor = '#e5e7eb';
-        }
-      }}
-      onClick={() => navigate(`/product/${product.id}`)}
-    >
-      {/* Image Container */}
-      <div style={{
-        position: 'relative',
-        overflow: 'hidden',
-        backgroundColor: '#f8fafc'
-      }}>
+  const ProductCard = ({ product }) => (
+    <div className="product-card" onClick={() => navigate(`/product/${product.id}`)}>
+      <div className="product-image-wrapper">
         <img
           src={product.images[0]}
           alt={product.title}
-          style={{
-            width: '100%',
-            height: isMobile ? '200px' : '280px',
-            objectFit: 'cover',
-            transition: 'transform 0.3s ease'
-          }}
+          className="product-image"
           loading="lazy"
-          onMouseEnter={(e) => {
-            if (!isMobile) {
-              e.target.style.transform = 'scale(1.05)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (!isMobile) {
-              e.target.style.transform = 'scale(1)';
-            }
-          }}
         />
         
-        {/* Classic Discount Badge */}
         {product.discount > 0 && (
-          <div style={{
-            position: 'absolute',
-            top: '12px',
-            left: '12px',
-            background: '#dc2626',
-            color: '#ffffff',
-            padding: isMobile ? '4px 8px' : '6px 10px',
-            borderRadius: '4px',
-            fontSize: isMobile ? '10px' : '12px',
-            fontWeight: '600',
-            letterSpacing: '0.5px'
-          }}>
-            -{product.discount}%
-          </div>
+          <div className="discount-badge">{product.discount}% OFF</div>
         )}
         
-        {/* Professional Trending Badge */}
-        {product.isTrending && (
-          <div style={{
-            position: 'absolute',
-            top: '12px',
-            right: '12px',
-            background: '#059669',
-            color: '#ffffff',
-            padding: isMobile ? '4px 8px' : '6px 10px',
-            borderRadius: '4px',
-            fontSize: isMobile ? '9px' : '11px',
-            fontWeight: '600',
-            letterSpacing: '0.5px'
-          }}>
-            TRENDING
-          </div>
+        {!product.inStock && (
+          <div className="out-of-stock-badge">Out of Stock</div>
         )}
         
-        {/* Wishlist Button */}
-        {!isMobile && (
-          <button style={{
-            position: 'absolute',
-            bottom: '12px',
-            right: '12px',
-            padding: '8px',
-            borderRadius: '4px',
-            background: 'rgba(255, 255, 255, 0.95)',
-            border: '1px solid #e5e7eb',
-            cursor: 'pointer',
-            opacity: 0,
-            transition: 'all 0.3s ease',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}
-          onMouseEnter={(e) => {
+        <button 
+          className="wishlist-btn"
+          onClick={(e) => {
             e.stopPropagation();
-            e.target.style.background = '#f3f4f6';
-            e.target.style.opacity = '1';
           }}
-          onMouseLeave={(e) => {
-            e.target.style.background = 'rgba(255, 255, 255, 0.95)';
-            e.target.style.opacity = '0';
-          }}>
-            <Heart style={{ width: '16px', height: '16px', color: '#6b7280' }} />
-          </button>
-        )}
+        >
+          <Heart className="icon-sm" />
+        </button>
+
+        <button 
+          className="quick-view-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          <Eye className="icon-sm" />
+        </button>
       </div>
       
-      {/* Content Section */}
-      <div style={{
-        padding: isMobile ? '14px' : '18px',
-        background: '#ffffff'
-      }}>
-        {/* Title */}
-        <h3 style={{
-          fontWeight: '600',
-          fontSize: isMobile ? '14px' : '16px',
-          color: '#1f2937',
-          marginBottom: '8px',
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-          lineHeight: 1.4,
-          letterSpacing: '0.3px'
-        }}>
-          {product.title}
-        </h3>
+      <div className="product-content">
+        <div className="product-brand">{product.brand}</div>
+        <h3 className="product-title">{product.title}</h3>
         
-        {/* Rating */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '12px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2px', marginRight: '8px' }}>
+        <div className="product-rating">
+          <div className="stars">
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                style={{
-                  width: isMobile ? '12px' : '14px',
-                  height: isMobile ? '12px' : '14px',
-                  color: i < Math.floor(parseFloat(product.rating)) ? '#fbbf24' : '#e5e7eb',
-                  fill: i < Math.floor(parseFloat(product.rating)) ? '#fbbf24' : '#e5e7eb'
-                }}
+                className={`star ${i < Math.floor(parseFloat(product.rating)) ? 'filled' : ''}`}
               />
             ))}
           </div>
-          <span style={{
-            fontSize: isMobile ? '12px' : '13px',
-            color: '#6b7280',
-            fontWeight: '500'
-          }}>
-            ({product.rating})
-          </span>
+          <span className="rating-text">{product.rating} ({product.reviewsCount})</span>
         </div>
 
-        {/* Price Section */}
-        <div style={{
-          marginBottom: isMobile ? '8px' : '12px'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <span style={{
-              fontSize: isMobile ? '18px' : '22px',
-              fontWeight: '700',
-              color: '#1f2937'
-            }}>
-              ₹{product.price.toLocaleString()}
-            </span>
-            {product.originalPrice > product.price && (
-              <span style={{
-                fontSize: isMobile ? '14px' : '16px',
-                color: '#9ca3af',
-                textDecoration: 'line-through',
-                fontWeight: '500'
-              }}>
-                ₹{product.originalPrice.toLocaleString()}
-              </span>
-            )}
-          </div>
+        <div className="product-price">
+          <span className="current-price">₹{product.price.toLocaleString()}</span>
+          {product.originalPrice > product.price && (
+            <span className="original-price">₹{product.originalPrice.toLocaleString()}</span>
+          )}
         </div>
-
-        {/* Add to Cart Button - Mobile */}
-        {isMobile && (
-          <button style={{
-            width: '100%',
-            marginTop: '8px',
-            padding: '10px',
-            background: '#1f2937',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '13px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'background-color 0.3s ease',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}
-          onMouseDown={(e) => {
-            e.target.style.background = '#111827';
-          }}
-          onMouseUp={(e) => {
-            e.target.style.background = '#1f2937';
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            // Add to cart functionality
-          }}>
-            Add to Cart
-          </button>
-        )}
+        
+        <button className="add-to-cart-btn" onClick={(e) => e.stopPropagation()}>
+          <ShoppingBag className="icon-xs" />
+          Add to Cart
+        </button>
       </div>
     </div>
   );
 
-  // Mobile Filter Modal
+  const MarketingSection = ({ type }) => {
+    if (type === 1) {
+      return (
+        <div className="marketing-section section-features">
+          <div className="features-grid">
+            <div className="feature-card">
+              <div className="feature-icon">
+                <Truck />
+              </div>
+              <h3>Free Shipping</h3>
+              <p>On orders above ₹999</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">
+                <Shield />
+              </div>
+              <h3>Secure Payment</h3>
+              <p>100% secure transactions</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">
+                <Award />
+              </div>
+              <h3>Premium Quality</h3>
+              <p>Top-notch materials</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">
+                <TrendingUp />
+              </div>
+              <h3>Trending Styles</h3>
+              <p>Latest fashion trends</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    if (type === 2) {
+      return (
+        <div className="marketing-section section-cta">
+          <div className="cta-content">
+            <h2>Elevate Your Style</h2>
+            <p>Discover the perfect blend of comfort and fashion with our premium collection</p>
+            <button className="cta-button">Shop Best Sellers</button>
+          </div>
+        </div>
+      );
+    }
+    
+    return null;
+  };
+
+  const renderProductsWithSections = () => {
+    const items = [];
+    const productsPerRow = isMobile ? 2 : 3;
+    
+    filteredProducts.forEach((product, index) => {
+      items.push(<ProductCard key={product.id} product={product} />);
+      
+      // Add marketing section after every 6 products (3 rows on desktop, 6 rows on mobile)
+      if ((index + 1) % (productsPerRow * (isMobile ? 3 : 2)) === 0 && index < filteredProducts.length - 1) {
+        const sectionType = Math.floor((index + 1) / (productsPerRow * (isMobile ? 3 : 2))) % 2 === 1 ? 1 : 2;
+        items.push(
+          <div key={`section-${index}`} className="marketing-section-wrapper">
+            <MarketingSection type={sectionType} />
+          </div>
+        );
+      }
+    });
+    
+    return items;
+  };
+
   const MobileFilterModal = () => (
     showFilters && isMobile && (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.5)',
-        zIndex: 999,
-        display: 'flex',
-        alignItems: 'flex-end'
-      }}>
-        <div style={{
-          width: '100%',
-          background: '#ffffff',
-          borderRadius: '12px 12px 0 0',
-          padding: '20px',
-          maxHeight: '80vh',
-          overflow: 'auto'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '20px'
-          }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: '600',
-              color: '#1f2937',
-              margin: 0
-            }}>
-              Filters & Sort
-            </h3>
-            <button
-              onClick={() => setShowFilters(false)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '8px',
-                borderRadius: '4px'
-              }}
-            >
-              <X size={20} color="#6b7280" />
+      <div className="filter-overlay" onClick={() => setShowFilters(false)}>
+        <div className="filter-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="filter-header">
+            <h3>Filters & Sort</h3>
+            <button onClick={() => setShowFilters(false)} className="close-btn">
+              <X size={20} />
             </button>
           </div>
           
-          <div style={{ color: '#6b7280' }}>
-            <p>Filter options will be implemented here...</p>
+          <div className="filter-content">
+            <div className="filter-group">
+              <h4>Price Range</h4>
+              <p>₹{filters.priceRange[0]} - ₹{filters.priceRange[1]}</p>
+            </div>
+            
+            <div className="filter-group">
+              <h4>Sort By</h4>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="filter-select"
+              >
+                {sortOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
             <button
               onClick={() => setShowFilters(false)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                background: '#374151',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                marginTop: '20px'
-              }}
+              className="apply-filters-btn"
             >
               Apply Filters
             </button>
@@ -481,151 +348,43 @@ export default function CategoryPage() {
   );
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#f8fafc',
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-      position: 'relative',
-      paddingTop: isMobile ? '0' : '0'
-    }}>
-      {/* Professional Glass Header */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
-        borderBottom: '1px solid #e5e7eb',
-        position: 'sticky',
-        top: 0,
-        zIndex: isMobile ? 100 : 1000,
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-      }}>
-        <div style={{
-          maxWidth: '1400px',
-          margin: '0 auto',
-          padding: '0 15px'
-        }}>
-          {/* Desktop Header */}
-          {!isMobile && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              height: '70px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <button
-                  onClick={() => navigate(-1)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    background: '#ffffff',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    padding: '10px 16px',
-                    color: '#374151',
-                    cursor: 'pointer',
-                    marginRight: '20px',
-                    transition: 'all 0.3s ease',
-                    fontWeight: '500',
-                    fontSize: '14px',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = '#f9fafb';
-                    e.target.style.borderColor = '#9ca3af';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background = '#ffffff';
-                    e.target.style.borderColor = '#d1d5db';
-                  }}
-                >
-                  <ArrowLeft style={{ width: '16px', height: '16px', marginRight: '8px' }} />
+    <div className="category-page">
+      <div className="header-wrapper">
+        <div className="header-container">
+          {!isMobile ? (
+            <div className="desktop-header">
+              <div className="header-left">
+                <button onClick={() => navigate(-1)} className="back-btn">
+                  <ArrowLeft className="icon-sm" />
                   Back
                 </button>
                 <div>
-                  <h1 style={{
-                    fontSize: '28px',
-                    fontWeight: '700',
-                    color: '#111827',
-                    textTransform: 'capitalize',
-                    margin: '0',
-                    letterSpacing: '0.3px'
-                  }}>
-                    {name} Collection
-                  </h1>
-                  <p style={{
-                    fontSize: '14px',
-                    color: '#6b7280',
-                    margin: '4px 0 0 0',
-                    fontWeight: '400'
-                  }}>
-                    {filteredProducts.length} products available
-                  </p>
+                  <h1 className="page-title">{name} Collection</h1>
+                  <p className="products-count">{filteredProducts.length} products</p>
                 </div>
               </div>
               
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}>
-                {/* Professional View Toggle */}
-                <div style={{
-                  display: 'flex',
-                  background: '#ffffff',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  padding: '2px',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-                }}>
+              <div className="header-right">
+                <div className="view-toggle">
                   <button
                     onClick={() => setViewMode('grid')}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: '4px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      background: viewMode === 'grid' ? '#374151' : 'transparent',
-                      color: viewMode === 'grid' ? '#ffffff' : '#6b7280'
-                    }}
+                    className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
                   >
-                    <Grid style={{ width: '16px', height: '16px' }} />
+                    <Grid className="icon-sm" />
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    style={{
-                      padding: '8px 12px',
-                      borderRadius: '4px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      background: viewMode === 'list' ? '#374151' : 'transparent',
-                      color: viewMode === 'list' ? '#ffffff' : '#6b7280'
-                    }}
+                    className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
                   >
-                    <List style={{ width: '16px', height: '16px' }} />
+                    <List className="icon-sm" />
                   </button>
                 </div>
 
-                {/* Professional Sort Dropdown */}
-                <div style={{ position: 'relative' }}>
+                <div className="sort-wrapper">
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    style={{
-                      appearance: 'none',
-                      background: '#ffffff',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '6px',
-                      padding: '10px 35px 10px 16px',
-                      outline: 'none',
-                      cursor: 'pointer',
-                      color: '#374151',
-                      fontWeight: '500',
-                      fontSize: '14px',
-                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-                    }}
+                    className="sort-select"
                   >
                     {sortOptions.map(option => (
                       <option key={option.value} value={option.value}>
@@ -633,460 +392,87 @@ export default function CategoryPage() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown style={{
-                    width: '16px',
-                    height: '16px',
-                    color: '#6b7280',
-                    position: 'absolute',
-                    right: '12px',
-                    top: '12px',
-                    pointerEvents: 'none'
-                  }} />
+                  <ChevronDown className="select-icon" />
                 </div>
 
-                {/* Professional Filter Button */}
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '10px 20px',
-                    background: '#374151',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    fontSize: '14px',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.background = '#1f2937';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.background = '#374151';
-                  }}
+                  className="filters-btn"
                 >
-                  <SlidersHorizontal style={{ width: '16px', height: '16px' }} />
+                  <SlidersHorizontal className="icon-sm" />
                   Filters
                 </button>
               </div>
             </div>
-          )}
-
-          {/* Mobile Header */}
-          {isMobile && (
-            <div style={{ paddingTop: '15px', paddingBottom: '15px' }}>
-              {/* Top Row */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '15px'
-              }}>
-                <button
-                  onClick={() => navigate(-1)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    background: '#ffffff',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    padding: '8px 12px',
-                    color: '#374151',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    fontWeight: '500',
-                    fontSize: '12px',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-                  }}
-                >
-                  <ArrowLeft style={{ width: '14px', height: '14px', marginRight: '6px' }} />
-                  Back
+          ) : (
+            <div className="mobile-header">
+              <div className="mobile-header-top">
+                <button onClick={() => navigate(-1)} className="back-btn mobile">
+                  <ArrowLeft className="icon-xs" />
                 </button>
 
-                <div style={{ textAlign: 'center', flex: 1, margin: '0 10px' }}>
-                  <h1 style={{
-                    fontSize: '18px',
-                    fontWeight: '700',
-                    color: '#111827',
-                    textTransform: 'capitalize',
-                    margin: '0',
-                    letterSpacing: '0.3px'
-                  }}>
-                    {name}
-                  </h1>
-                  <p style={{
-                    fontSize: '12px',
-                    color: '#6b7280',
-                    margin: '2px 0 0 0',
-                    fontWeight: '400'
-                  }}>
-                    {filteredProducts.length} products
-                  </p>
+                <div className="mobile-title-section">
+                  <h1 className="page-title mobile">{name}</h1>
+                  <p className="products-count mobile">{filteredProducts.length} items</p>
                 </div>
 
-                <div style={{ position: 'relative' }}>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    style={{
-                      appearance: 'none',
-                      background: '#ffffff',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '6px',
-                      padding: '8px 25px 8px 12px',
-                      outline: 'none',
-                      cursor: 'pointer',
-                      color: '#374151',
-                      fontWeight: '500',
-                      fontSize: '12px',
-                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                      minWidth: '80px'
-                    }}
-                  >
-                    {sortOptions.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown style={{
-                    width: '12px',
-                    height: '12px',
-                    color: '#6b7280',
-                    position: 'absolute',
-                    right: '8px',
-                    top: '10px',
-                    pointerEvents: 'none'
-                  }} />
-                </div>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="filters-btn mobile"
+                >
+                  <SlidersHorizontal className="icon-xs" />
+                </button>
               </div>
 
-              {/* Search Bar - Mobile */}
-              <div style={{
-                position: 'relative',
-                marginBottom: '15px'
-              }}>
-                <Search style={{
-                  width: '16px',
-                  height: '16px',
-                  color: '#6b7280',
-                  position: 'absolute',
-                  left: '12px',
-                  top: '12px'
-                }} />
+              <div className="search-wrapper mobile">
+                <Search className="search-icon" />
                 <input
                   type="text"
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    width: '100%',
-                    paddingLeft: '40px',
-                    paddingRight: '12px',
-                    paddingTop: '12px',
-                    paddingBottom: '12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    outline: 'none',
-                    fontSize: '14px',
-                    background: '#ffffff',
-                    color: '#374151',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                    boxSizing: 'border-box'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.border = '1px solid #3b82f6';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.border = '1px solid #d1d5db';
-                    e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-                  }}
+                  className="search-input"
                 />
-              </div>
-
-              {/* Filter Button - Mobile */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                marginBottom: '10px'
-              }}>
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '10px 20px',
-                    background: '#374151',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontWeight: '600',
-                    fontSize: '12px',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                    zIndex: 50
-                  }}
-                >
-                  <SlidersHorizontal style={{ width: '14px', height: '14px' }} />
-                  Filters & Sort
-                </button>
               </div>
             </div>
           )}
 
-          {/* Desktop Professional Search Bar */}
           {!isMobile && (
-            <div style={{ paddingBottom: '20px' }}>
-              <div style={{
-                position: 'relative',
-                maxWidth: '500px',
-                margin: '0 auto'
-              }}>
-                <Search style={{
-                  width: '18px',
-                  height: '18px',
-                  color: '#6b7280',
-                  position: 'absolute',
-                  left: '16px',
-                  top: '14px'
-                }} />
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    width: '100%',
-                    paddingLeft: '45px',
-                    paddingRight: '16px',
-                    paddingTop: '12px',
-                    paddingBottom: '12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    outline: 'none',
-                    fontSize: '14px',
-                    background: '#ffffff',
-                    color: '#374151',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.border = '1px solid #3b82f6';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.border = '1px solid #d1d5db';
-                    e.target.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-                  }}
-                />
-              </div>
+            <div className="search-wrapper desktop">
+              <Search className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
             </div>
           )}
         </div>
       </div>
 
-      {/* Professional Hero Section - Desktop only */}
-      {!isMobile && (
-        <div style={{
-          padding: '40px 20px',
-          textAlign: 'center',
-          background: '#ffffff',
-          borderBottom: '1px solid #e5e7eb'
-        }}>
-          <h1 style={{
-            fontSize: '3rem',
-            fontWeight: '700',
-            color: '#111827',
-            marginBottom: '16px',
-            textTransform: 'capitalize',
-            letterSpacing: '0.5px'
-          }}>
-            {name} Collection
-          </h1>
-          <p style={{
-            fontSize: '16px',
-            color: '#6b7280',
-            fontWeight: '400',
-            maxWidth: '600px',
-            margin: '0 auto'
-          }}>
-            Discover our curated selection of premium {name} designed for style and comfort
-          </p>
-        </div>
-      )}
-
-      {/* Mobile Professional Hero Section */}
-      {isMobile && (
-        <div style={{
-          padding: '16px 20px',
-          textAlign: 'center',
-          background: '#ffffff',
-          borderBottom: '1px solid #e5e7eb'
-        }}>
-          <h1 style={{
-            fontSize: '1.75rem',
-            fontWeight: '700',
-            color: '#111827',
-            marginBottom: '8px',
-            textTransform: 'capitalize',
-            letterSpacing: '0.3px'
-          }}>
-            {name} Collection
-          </h1>
-          <p style={{
-            fontSize: '14px',
-            color: '#6b7280',
-            fontWeight: '400'
-          }}>
-            Premium quality, curated for you
-          </p>
-        </div>
-      )}
-
-      {/* Products Grid */}
-      <div style={{
-        maxWidth: '1400px',
-        margin: '0 auto',
-        padding: isMobile ? '0 10px 60px' : '0 20px 80px'
-      }}>
+      <div className="products-container">
         {loading ? (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: isMobile ? '60px 0' : '100px 0',
-            flexDirection: 'column'
-          }}>
-            <div style={{
-              width: isMobile ? '40px' : '50px',
-              height: isMobile ? '40px' : '50px',
-              border: '3px solid #e5e7eb',
-              borderTop: '3px solid #374151',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              marginBottom: '20px'
-            }}></div>
-            <h2 style={{
-              color: '#1f2937',
-              fontSize: isMobile ? '16px' : '20px',
-              fontWeight: '600',
-              marginBottom: '8px'
-            }}>
-              Loading products...
-            </h2>
-            <p style={{
-              color: '#6b7280',
-              fontSize: isMobile ? '14px' : '16px',
-              margin: 0,
-              textAlign: 'center'
-            }}>
-              Please wait while we fetch the latest {name} collection
-            </p>
+          <div className="loading-state">
+            <div className="spinner"></div>
+            <h2 className="loading-title">Loading products...</h2>
+            <p className="loading-subtitle">Please wait while we fetch the latest collection</p>
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: isMobile ? '60px 20px' : '100px 20px',
-            color: '#1f2937'
-          }}>
-            <div style={{ marginBottom: '25px' }}>
-              <Grid style={{
-                width: isMobile ? '50px' : '70px',
-                height: isMobile ? '50px' : '70px',
-                margin: '0 auto',
-                color: '#9ca3af'
-              }} />
-            </div>
-            <h3 style={{
-              fontSize: isMobile ? '18px' : '24px',
-              fontWeight: '600',
-              marginBottom: '12px',
-              color: '#1f2937'
-            }}>
-              No products found
-            </h3>
-            <p style={{
-              fontSize: isMobile ? '14px' : '16px',
-              color: '#6b7280'
-            }}>
-              Try adjusting your search or filters to find what you're looking for
-            </p>
+          <div className="empty-state">
+            <Grid className="empty-icon" />
+            <h3 className="empty-title">No products found</h3>
+            <p className="empty-subtitle">Try adjusting your search or filters</p>
           </div>
         ) : (
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: isMobile ? 'space-around' : 'center',
-            gap: isMobile ? '8px' : '15px',
-            padding: '20px 0'
-          }}>
-            {filteredProducts.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
-            ))}
+          <div className="products-grid">
+            {renderProductsWithSections()}
           </div>
         )}
       </div>
 
-      {/* Mobile Filter Modal */}
       <MobileFilterModal />
-
-      {/* Professional CSS Animations */}
-      <style jsx>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-
-        * {
-          -webkit-tap-highlight-color: transparent;
-          box-sizing: border-box;
-        }
-
-        /* Mobile specific styles */
-        @media (max-width: 768px) {
-          .category-page {
-            padding-top: 0;
-          }
-          
-          /* Touch-friendly buttons */
-          button {
-            min-height: 40px;
-            min-width: 40px;
-          }
-          
-          /* Better text readability on mobile */
-          input, select {
-            font-size: 16px; /* Prevents zoom on iOS */
-          }
-        }
-
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
-      `}</style>
     </div>
   );
 }
