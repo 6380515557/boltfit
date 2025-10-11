@@ -1,11 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Phone, MapPin, Mail, MessageSquare, Image, Edit } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  User, 
+  Phone, 
+  MapPin, 
+  Mail, 
+  MessageSquare, 
+  Edit, 
+  Check,
+  Shield,
+  Truck,
+  Gift,
+  Tag
+} from 'lucide-react';
+import { useCart } from '../context/CartContext';
+import './CustomerDetailsPage.css';
 
 export default function CustomerDetailsPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { productData } = location.state || {};
+  const { clearCart } = useCart();
+  
+  const { productData, cartItems, isFromCart } = location.state || {};
 
   const [customerDetails, setCustomerDetails] = useState({
     name: '',
@@ -23,24 +40,21 @@ export default function CustomerDetailsPage() {
   const [isReturningUser, setIsReturningUser] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
 
-  // Your WhatsApp number - replace with your actual number
-  const WHATSAPP_NUMBER = "918778146987"; // Replace with your number
+  const WHATSAPP_NUMBER = "918778146987";
 
-  // Load saved customer details on component mount
   useEffect(() => {
-    if (!productData) {
+    if (!productData && !cartItems) {
       navigate('/');
       return;
     }
 
-    // Check if user details exist in localStorage
     const savedDetails = localStorage.getItem('customerDetails');
     if (savedDetails) {
       const parsedDetails = JSON.parse(savedDetails);
-      setCustomerDetails(parsedDetails);
+      setCustomerDetails(prev => ({ ...prev, ...parsedDetails }));
       setIsReturningUser(true);
     }
-  }, [productData, navigate]);
+  }, [productData, cartItems, navigate]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -89,7 +103,6 @@ export default function CustomerDetailsPage() {
       [field]: value
     }));
 
-    // Clear error for this field
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -99,14 +112,57 @@ export default function CustomerDetailsPage() {
   };
 
   const saveCustomerDetails = () => {
-    // Save customer details to localStorage (excluding additionalInfo for reuse)
     const detailsToSave = { ...customerDetails };
-    delete detailsToSave.additionalInfo; // Don't save additional info as it's order-specific
+    delete detailsToSave.additionalInfo;
     localStorage.setItem('customerDetails', JSON.stringify(detailsToSave));
   };
 
   const formatWhatsAppMessage = () => {
-    const message = `
+    let message = '';
+    let total = 0;
+    let subtotal = 0;
+    let discount = 0;
+    let deliveryCharge = 0;
+
+    if (isFromCart && cartItems) {
+      const itemsList = cartItems.map((item, idx) => 
+        `${idx + 1}. ${item.title}\n   • Size: ${item.selectedSize} | Color: ${item.selectedColor}\n   • Qty: ${item.quantity} | Price: ₹${item.price} each\n   • Subtotal: ₹${item.price * item.quantity}\n   • Image: ${item.image}`
+      ).join('\n\n');
+
+      subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+      discount = Math.floor(subtotal * 0.1);
+      deliveryCharge = subtotal >= 999 ? 0 : 50;
+      total = subtotal - discount + deliveryCharge;
+
+      message = `
+🛒 *NEW ORDER - ${cartItems.length} ITEM${cartItems.length > 1 ? 'S' : ''}*
+
+📦 *ORDER ITEMS:*
+${itemsList}
+
+💰 *PRICE BREAKDOWN:*
+• Subtotal: ₹${subtotal.toLocaleString()}
+• Discount (10%): −₹${discount.toLocaleString()}
+• Delivery: ${deliveryCharge === 0 ? 'FREE' : '₹' + deliveryCharge}
+• *TOTAL AMOUNT: ₹${total.toLocaleString()}*
+
+👤 *CUSTOMER DETAILS:*
+• Name: ${customerDetails.name}
+• Phone: ${customerDetails.phone}
+• Email: ${customerDetails.email}
+
+📍 *DELIVERY ADDRESS:*
+${customerDetails.address}
+${customerDetails.city}, ${customerDetails.state}
+Pincode: ${customerDetails.pincode}
+
+${customerDetails.additionalInfo ? `📝 *ADDITIONAL INFO:*\n${customerDetails.additionalInfo}\n` : ''}
+Please confirm this order. Thank you!
+      `.trim();
+    } else if (productData) {
+      total = productData.price * productData.quantity;
+
+      message = `
 🛒 *New Order Details*
 
 📦 *Product Information:*
@@ -115,7 +171,7 @@ export default function CustomerDetailsPage() {
 • Size: ${productData.selectedSize}
 • Color: ${productData.selectedColor}
 • Quantity: ${productData.quantity}
-• Total: ₹${productData.price * productData.quantity}
+• Total: ₹${total}
 
 🖼️ *Product Image:*
 ${productData.image}
@@ -130,11 +186,11 @@ ${customerDetails.address}
 ${customerDetails.city}, ${customerDetails.state}
 Pincode: ${customerDetails.pincode}
 
-${customerDetails.additionalInfo ? `📝 *Additional Info:*
-${customerDetails.additionalInfo}` : ''}
+${customerDetails.additionalInfo ? `📝 *Additional Info:*\n${customerDetails.additionalInfo}` : ''}
 
 Please confirm this order. Thank you!
-    `.trim();
+      `.trim();
+    }
 
     return encodeURIComponent(message);
   };
@@ -147,34 +203,30 @@ Please confirm this order. Thank you!
     }
 
     setIsSubmitting(true);
-
-    // Save customer details for future use
     saveCustomerDetails();
 
-    // Simulate processing time
     setTimeout(() => {
       const whatsappMessage = formatWhatsAppMessage();
       const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`;
       
-      // Open WhatsApp with message including image link
       window.open(whatsappUrl, '_blank');
       
       setIsSubmitting(false);
       
-      // Show success message
-      alert(`
-✅ Order details sent to WhatsApp!
-💾 Your details have been saved for future orders!
-
-The message includes:
-• Complete order information
-• Customer details
-• Product image link
-      `);
+      const successMessage = isFromCart
+        ? `✅ Order details sent to WhatsApp!\n💾 Your details have been saved for future orders!\n\nThe message includes all ${cartItems.length} items with images.`
+        : `✅ Order details sent to WhatsApp!\n💾 Your details have been saved for future orders!\n\nThe message includes complete order information and product image link.`;
+      
+      alert(successMessage);
+      
+      if (isFromCart) {
+        clearCart();
+      }
+      
+      navigate('/');
     }, 1000);
   };
 
-  // Direct WhatsApp for returning users
   const handleDirectWhatsApp = () => {
     setIsSubmitting(true);
 
@@ -186,11 +238,13 @@ The message includes:
       
       setIsSubmitting(false);
       
-      alert(`
-✅ Order sent to WhatsApp with your saved details!
-
-You can edit your details anytime by clicking "Edit Details" button.
-      `);
+      alert(`✅ Order sent to WhatsApp with your saved details!`);
+      
+      if (isFromCart) {
+        clearCart();
+      }
+      
+      navigate('/');
     }, 1000);
   };
 
@@ -205,7 +259,6 @@ You can edit your details anytime by clicking "Edit Details" button.
       return;
     }
 
-    // Update saved details
     saveCustomerDetails();
     setShowEditForm(false);
     
@@ -230,609 +283,387 @@ You can edit your details anytime by clicking "Edit Details" button.
     }
   };
 
-  const isMobile = window.innerWidth <= 768;
-
-  const styles = {
-    container: {
-      fontFamily: "'Amazon Ember', Arial, sans-serif",
-      background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-      minHeight: '100vh',
-      padding: isMobile ? '15px' : '20px'
-    },
-    nav: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-      marginBottom: '20px',
-      padding: '15px 0',
-      borderBottom: '2px solid #dee2e6'
-    },
-    backBtn: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      color: '#007185',
-      cursor: 'pointer',
-      fontSize: '14px',
-      fontWeight: '600',
-      padding: '10px 16px',
-      borderRadius: '8px',
-      background: 'rgba(0, 113, 133, 0.1)',
-      border: '2px solid transparent',
-      transition: 'all 0.3s ease'
-    },
-    main: {
-      maxWidth: '1200px',
-      margin: '0 auto',
-      display: 'grid',
-      gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-      gap: '30px',
-      background: 'white',
-      borderRadius: '16px',
-      padding: isMobile ? '20px' : '30px',
-      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)'
-    },
-    orderSummary: {
-      background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
-      borderRadius: '12px',
-      padding: '20px',
-      height: 'fit-content'
-    },
-    productCard: {
-      background: 'white',
-      borderRadius: '10px',
-      padding: '15px',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-      marginBottom: '20px'
-    },
-    productImage: {
-      width: '80px',
-      height: '80px',
-      objectFit: 'cover',
-      borderRadius: '8px',
-      marginRight: '15px'
-    },
-    productInfo: {
-      flex: 1
-    },
-    form: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '20px'
-    },
-    section: {
-      background: 'linear-gradient(135deg, #f8f9fa, #ffffff)',
-      borderRadius: '10px',
-      padding: '20px',
-      border: '1px solid #e9ecef'
-    },
-    sectionTitle: {
-      fontSize: '18px',
-      fontWeight: '700',
-      color: '#0f1111',
-      marginBottom: '15px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px'
-    },
-    inputGroup: {
-      marginBottom: '15px'
-    },
-    label: {
-      display: 'block',
-      fontSize: '14px',
-      fontWeight: '600',
-      color: '#333',
-      marginBottom: '5px'
-    },
-    input: {
-      width: '100%',
-      padding: '12px 15px',
-      border: '2px solid #e9ecef',
-      borderRadius: '8px',
-      fontSize: '14px',
-      transition: 'all 0.3s ease',
-      boxSizing: 'border-box'
-    },
-    inputError: {
-      borderColor: '#dc3545'
-    },
-    textarea: {
-      width: '100%',
-      padding: '12px 15px',
-      border: '2px solid #e9ecef',
-      borderRadius: '8px',
-      fontSize: '14px',
-      minHeight: '100px',
-      resize: 'vertical',
-      transition: 'all 0.3s ease',
-      boxSizing: 'border-box'
-    },
-    error: {
-      color: '#dc3545',
-      fontSize: '12px',
-      marginTop: '5px'
-    },
-    submitBtn: {
-      background: 'linear-gradient(135deg, #28a745, #20c997)',
-      color: 'white',
-      border: 'none',
-      padding: '15px 30px',
-      borderRadius: '10px',
-      fontSize: '16px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '10px',
-      marginTop: '20px'
-    },
-    editBtn: {
-      background: 'linear-gradient(135deg, #007185, #005a6b)',
-      color: 'white',
-      border: 'none',
-      padding: '12px 24px',
-      borderRadius: '8px',
-      fontSize: '14px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '8px',
-      margin: '10px 5px'
-    },
-    clearBtn: {
-      background: 'linear-gradient(135deg, #dc3545, #c82333)',
-      color: 'white',
-      border: 'none',
-      padding: '12px 24px',
-      borderRadius: '8px',
-      fontSize: '14px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '8px',
-      margin: '10px 5px'
-    },
-    loading: {
-      background: '#6c757d',
-      cursor: 'not-allowed'
-    },
-    previewImage: {
-      width: isMobile ? '120px' : '150px',
-      height: isMobile ? '120px' : '150px',
-      objectFit: 'cover',
-      borderRadius: '10px',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-      border: '2px solid #e9ecef'
-    },
-    savedDetails: {
-      background: 'linear-gradient(135deg, #e8f5e8, #f0f9f0)',
-      borderRadius: '10px',
-      padding: '15px',
-      border: '2px solid #28a745',
-      marginBottom: '20px'
-    },
-    detailItem: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      padding: '5px 0',
-      borderBottom: '1px solid #e9ecef'
+  const calculateTotals = () => {
+    if (isFromCart && cartItems) {
+      const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+      const discount = Math.floor(subtotal * 0.1);
+      const deliveryCharge = subtotal >= 999 ? 0 : 50;
+      const total = subtotal - discount + deliveryCharge;
+      return { subtotal, discount, deliveryCharge, total };
+    } else if (productData) {
+      const total = productData.price * productData.quantity;
+      return { subtotal: total, discount: 0, deliveryCharge: 0, total };
     }
+    return { subtotal: 0, discount: 0, deliveryCharge: 0, total: 0 };
   };
 
-  if (!productData) {
-    return <div>Loading...</div>;
+  const { subtotal, discount, deliveryCharge, total } = calculateTotals();
+
+  if (!productData && !cartItems) {
+    return <div className="loading-container">Loading...</div>;
   }
 
+  const itemsToDisplay = isFromCart ? cartItems : [productData];
+
   return (
-    <div style={styles.container}>
-      {/* Navigation */}
-      <nav style={styles.nav}>
-        <div 
-          style={styles.backBtn}
-          onClick={() => navigate(-1)}
-        >
-          <ArrowLeft size={18} />
-          Back to Product
-        </div>
-      </nav>
-
-      <div style={styles.main}>
-        {/* Order Summary */}
-        <div style={styles.orderSummary}>
-          <h2 style={styles.sectionTitle}>
-            Order Summary
-          </h2>
-          
-          <div style={styles.productCard}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <img 
-                src={productData.image} 
-                alt={productData.title}
-                style={styles.productImage}
-              />
-              <div style={styles.productInfo}>
-                <h3 style={{ margin: '0 0 5px 0', fontSize: '16px' }}>
-                  {productData.title}
-                </h3>
-                <p style={{ margin: '0', color: '#666', fontSize: '14px' }}>
-                  Size: {productData.selectedSize} | Color: {productData.selectedColor}
-                </p>
-                <p style={{ margin: '5px 0', color: '#666', fontSize: '14px' }}>
-                  Quantity: {productData.quantity}
-                </p>
-                <p style={{ margin: '5px 0 0 0', fontSize: '18px', fontWeight: '700', color: '#B12704' }}>
-                  ₹{productData.price * productData.quantity}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ background: 'white', borderRadius: '8px', padding: '15px' }}>
-            <h4 style={{ margin: '0 0 10px 0' }}>Price Details</h4>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-              <span>Item Total:</span>
-              <span>₹{productData.price * productData.quantity}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-              <span>Delivery:</span>
-              <span style={{ color: '#28a745' }}>FREE</span>
-            </div>
-            <hr style={{ margin: '10px 0' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: '700' }}>
-              <span>Total:</span>
-              <span style={{ color: '#B12704' }}>₹{productData.price * productData.quantity}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Customer Details Section */}
-        <div>
-          <h2 style={styles.sectionTitle}>
-            <User size={24} />
-            {isReturningUser ? 'Welcome Back!' : 'Customer Details'}
-          </h2>
-          
-          {/* Show saved details for returning users */}
-          {isReturningUser && !showEditForm ? (
-            <div>
-              <div style={styles.savedDetails}>
-                <h3 style={{ margin: '0 0 15px 0', color: '#28a745', fontSize: '16px' }}>
-                  ✅ Your Saved Details
-                </h3>
-                
-                <div style={styles.detailItem}>
-                  <span><strong>Name:</strong></span>
-                  <span>{customerDetails.name}</span>
-                </div>
-                <div style={styles.detailItem}>
-                  <span><strong>Phone:</strong></span>
-                  <span>{customerDetails.phone}</span>
-                </div>
-                <div style={styles.detailItem}>
-                  <span><strong>Email:</strong></span>
-                  <span>{customerDetails.email}</span>
-                </div>
-                <div style={styles.detailItem}>
-                  <span><strong>Address:</strong></span>
-                  <span>{customerDetails.address}</span>
-                </div>
-                <div style={styles.detailItem}>
-                  <span><strong>City:</strong></span>
-                  <span>{customerDetails.city}</span>
-                </div>
-                <div style={styles.detailItem}>
-                  <span><strong>State:</strong></span>
-                  <span>{customerDetails.state}</span>
-                </div>
-                <div style={styles.detailItem}>
-                  <span><strong>Pincode:</strong></span>
-                  <span>{customerDetails.pincode}</span>
-                </div>
-              </div>
-
-              {/* Additional Info for current order */}
-              <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>
-                  <MessageSquare size={20} />
-                  Additional Information (Optional)
-                </h3>
-                <div style={styles.inputGroup}>
-                  <label style={styles.label}>Special Instructions for this order</label>
-                  <textarea
-                    value={customerDetails.additionalInfo}
-                    onChange={(e) => handleInputChange('additionalInfo', e.target.value)}
-                    style={styles.textarea}
-                    placeholder="Any special delivery instructions, preferred time, etc."
-                  />
-                </div>
-              </div>
-
-              {/* Action buttons for returning users */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '20px' }}>
-                <button
-                  onClick={handleDirectWhatsApp}
-                  disabled={isSubmitting}
-                  style={{
-                    ...styles.submitBtn,
-                    ...(isSubmitting ? styles.loading : {}),
-                    flex: 1
-                  }}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div style={{ 
-                        width: '20px', 
-                        height: '20px', 
-                        border: '2px solid #fff',
-                        borderTop: '2px solid transparent',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                      }} />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <MessageSquare size={20} />
-                      Send to WhatsApp
-                    </>
-                  )}
-                </button>
-                
-                <button
-                  onClick={handleEditDetails}
-                  style={styles.editBtn}
-                >
-                  <Edit size={16} />
-                  Edit Details
-                </button>
-                
-                <button
-                  onClick={handleClearDetails}
-                  style={styles.clearBtn}
-                >
-                  Clear Details
-                </button>
-              </div>
-            </div>
-          ) : (
-            // Show form for new users or when editing
-            <form style={styles.form} onSubmit={showEditForm ? handleUpdateDetails : handleSubmit}>
-              {/* Personal Information */}
-              <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>
-                  <User size={20} />
-                  Personal Information
-                </h3>
-                
-                <div style={styles.inputGroup}>
-                  <label style={styles.label}>Full Name *</label>
-                  <input
-                    type="text"
-                    value={customerDetails.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    style={{
-                      ...styles.input,
-                      ...(errors.name ? styles.inputError : {})
-                    }}
-                    placeholder="Enter your full name"
-                  />
-                  {errors.name && <div style={styles.error}>{errors.name}</div>}
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '15px' }}>
-                  <div style={styles.inputGroup}>
-                    <label style={styles.label}>Phone Number *</label>
-                    <input
-                      type="tel"
-                      value={customerDetails.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      style={{
-                        ...styles.input,
-                        ...(errors.phone ? styles.inputError : {})
-                      }}
-                      placeholder="10-digit mobile number"
-                    />
-                    {errors.phone && <div style={styles.error}>{errors.phone}</div>}
-                  </div>
-
-                  <div style={styles.inputGroup}>
-                    <label style={styles.label}>Email Address *</label>
-                    <input
-                      type="email"
-                      value={customerDetails.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      style={{
-                        ...styles.input,
-                        ...(errors.email ? styles.inputError : {})
-                      }}
-                      placeholder="your.email@example.com"
-                    />
-                    {errors.email && <div style={styles.error}>{errors.email}</div>}
-                  </div>
-                </div>
-              </div>
-
-              {/* Delivery Address */}
-              <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>
-                  <MapPin size={20} />
-                  Delivery Address
-                </h3>
-
-                <div style={styles.inputGroup}>
-                  <label style={styles.label}>Street Address *</label>
-                  <textarea
-                    value={customerDetails.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
-                    style={{
-                      ...styles.textarea,
-                      ...(errors.address ? styles.inputError : {}),
-                      minHeight: '80px'
-                    }}
-                    placeholder="House/Flat no, Building name, Street, Area"
-                  />
-                  {errors.address && <div style={styles.error}>{errors.address}</div>}
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '15px' }}>
-                  <div style={styles.inputGroup}>
-                    <label style={styles.label}>City *</label>
-                    <input
-                      type="text"
-                      value={customerDetails.city}
-                      onChange={(e) => handleInputChange('city', e.target.value)}
-                      style={{
-                        ...styles.input,
-                        ...(errors.city ? styles.inputError : {})
-                      }}
-                      placeholder="City"
-                    />
-                    {errors.city && <div style={styles.error}>{errors.city}</div>}
-                  </div>
-
-                  <div style={styles.inputGroup}>
-                    <label style={styles.label}>State *</label>
-                    <input
-                      type="text"
-                      value={customerDetails.state}
-                      onChange={(e) => handleInputChange('state', e.target.value)}
-                      style={{
-                        ...styles.input,
-                        ...(errors.state ? styles.inputError : {})
-                      }}
-                      placeholder="State"
-                    />
-                    {errors.state && <div style={styles.error}>{errors.state}</div>}
-                  </div>
-
-                  <div style={styles.inputGroup}>
-                    <label style={styles.label}>Pincode *</label>
-                    <input
-                      type="text"
-                      value={customerDetails.pincode}
-                      onChange={(e) => handleInputChange('pincode', e.target.value)}
-                      style={{
-                        ...styles.input,
-                        ...(errors.pincode ? styles.inputError : {})
-                      }}
-                      placeholder="6-digit pincode"
-                    />
-                    {errors.pincode && <div style={styles.error}>{errors.pincode}</div>}
-                  </div>
-                </div>
-              </div>
-
-              {/* Product Image Preview */}
-              <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>
-                  <Image size={20} />
-                  Product Image
-                </h3>
-                
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '15px',
-                  alignItems: 'center'
-                }}>
-                  <img 
-                    src={productData.image} 
-                    alt={productData.title}
-                    style={styles.previewImage}
-                  />
-                  
-                  <p style={{
-                    fontSize: '12px',
-                    color: '#666',
-                    textAlign: 'center',
-                    margin: '0',
-                    lineHeight: '1.4'
-                  }}>
-                    📸 Product image link will be included in the WhatsApp message.
-                  </p>
-                </div>
-              </div>
-
-              {/* Additional Information */}
-              <div style={styles.section}>
-                <h3 style={styles.sectionTitle}>
-                  <MessageSquare size={20} />
-                  Additional Information
-                </h3>
-
-                <div style={styles.inputGroup}>
-                  <label style={styles.label}>Special Instructions (Optional)</label>
-                  <textarea
-                    value={customerDetails.additionalInfo}
-                    onChange={(e) => handleInputChange('additionalInfo', e.target.value)}
-                    style={styles.textarea}
-                    placeholder="Any special delivery instructions, preferred time, etc."
-                  />
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  style={{
-                    ...styles.submitBtn,
-                    ...(isSubmitting ? styles.loading : {}),
-                    flex: 1
-                  }}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div style={{ 
-                        width: '20px', 
-                        height: '20px', 
-                        border: '2px solid #fff',
-                        borderTop: '2px solid transparent',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                      }} />
-                      {showEditForm ? 'Updating...' : 'Processing...'}
-                    </>
-                  ) : (
-                    <>
-                      <MessageSquare size={20} />
-                      {showEditForm ? 'Update & Send to WhatsApp' : 'Send to WhatsApp'}
-                    </>
-                  )}
-                </button>
-
-                {showEditForm && (
-                  <button
-                    type="button"
-                    onClick={() => setShowEditForm(false)}
-                    style={styles.editBtn}
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            </form>
-          )}
+    <div className="customer-details-page">
+      {/* Header */}
+      <div className="customer-header">
+        <button className="back-button" onClick={() => navigate(-1)}>
+          <ArrowLeft size={20} />
+          <span>{isFromCart ? 'Back to Cart' : 'Back to Product'}</span>
+        </button>
+        <div className="header-trust-badges">
+          <Shield size={16} />
+          <span>Safe & Secure Checkout</span>
         </div>
       </div>
 
-      {/* Add CSS animation for loading spinner */}
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
+      <div className="customer-container">
+        {/* Left Side - Order Summary */}
+        <div className="order-summary-wrapper">
+          <div className="order-summary-card">
+            <h2 className="section-heading">
+              <Tag size={22} />
+              Order Summary
+            </h2>
+            
+            <div className="products-list">
+              {itemsToDisplay.map((item, idx) => (
+                <div key={idx} className="summary-product-card">
+                  <div className="summary-product-image">
+                    <img src={item.image} alt={item.title} />
+                  </div>
+                  <div className="summary-product-info">
+                    <h3 className="summary-product-title">{item.title}</h3>
+                    <div className="summary-product-meta">
+                      <span className="meta-badge">Size: {item.selectedSize}</span>
+                      <span className="meta-badge">Color: {item.selectedColor}</span>
+                    </div>
+                    <div className="summary-product-quantity">
+                      Qty: <strong>{item.quantity}</strong>
+                    </div>
+                    <div className="summary-product-price">
+                      ₹{(item.price * item.quantity).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Price Breakdown */}
+            <div className="price-breakdown">
+              <h3 className="breakdown-title">Price Details</h3>
+              
+              {isFromCart && (
+                <>
+                  <div className="price-row">
+                    <span>Subtotal ({cartItems.length} items)</span>
+                    <span>₹{subtotal.toLocaleString()}</span>
+                  </div>
+                  <div className="price-row discount-row">
+                    <span>Discount (10%)</span>
+                    <span className="discount-value">−₹{discount.toLocaleString()}</span>
+                  </div>
+                  <div className="price-row">
+                    <span>Delivery Charges</span>
+                    <span className={deliveryCharge === 0 ? 'free-text' : ''}>
+                      {deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge}`}
+                    </span>
+                  </div>
+                </>
+              )}
+              
+              <div className="price-divider"></div>
+              
+              <div className="price-row total-row">
+                <span>Total Amount</span>
+                <span className="total-amount">₹{total.toLocaleString()}</span>
+              </div>
+
+              {discount > 0 && (
+                <div className="savings-info">
+                  <Gift size={16} />
+                  <span>You will save ₹{discount.toLocaleString()} on this order</span>
+                </div>
+              )}
+            </div>
+
+            {/* Delivery Benefits */}
+            <div className="delivery-benefits">
+              <div className="benefit-item">
+                <Truck size={18} />
+                <span>Fast & Safe Delivery</span>
+              </div>
+              <div className="benefit-item">
+                <Shield size={18} />
+                <span>Secure Payments</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side - Customer Details Form */}
+        <div className="customer-form-wrapper">
+          <div className="customer-form-card">
+            <h2 className="section-heading">
+              <User size={24} />
+              {isReturningUser ? 'Welcome Back!' : 'Delivery Details'}
+            </h2>
+            
+            {isReturningUser && !showEditForm ? (
+              <div>
+                {/* Saved Details Display */}
+                <div className="saved-details-card">
+                  <div className="saved-details-header">
+                    <Check size={20} />
+                    <span>Your Saved Details</span>
+                  </div>
+                  
+                  <div className="saved-detail-row">
+                    <span className="detail-label">Name:</span>
+                    <span className="detail-value">{customerDetails.name}</span>
+                  </div>
+                  <div className="saved-detail-row">
+                    <span className="detail-label">Phone:</span>
+                    <span className="detail-value">{customerDetails.phone}</span>
+                  </div>
+                  <div className="saved-detail-row">
+                    <span className="detail-label">Email:</span>
+                    <span className="detail-value">{customerDetails.email}</span>
+                  </div>
+                  <div className="saved-detail-row">
+                    <span className="detail-label">Address:</span>
+                    <span className="detail-value">{customerDetails.address}</span>
+                  </div>
+                  <div className="saved-detail-row">
+                    <span className="detail-label">City:</span>
+                    <span className="detail-value">{customerDetails.city}</span>
+                  </div>
+                  <div className="saved-detail-row">
+                    <span className="detail-label">State:</span>
+                    <span className="detail-value">{customerDetails.state}</span>
+                  </div>
+                  <div className="saved-detail-row">
+                    <span className="detail-label">Pincode:</span>
+                    <span className="detail-value">{customerDetails.pincode}</span>
+                  </div>
+                </div>
+
+                {/* Additional Info Section */}
+                <div className="form-section">
+                  <div className="form-section-header">
+                    <MessageSquare size={20} />
+                    <span>Additional Information (Optional)</span>
+                  </div>
+                  <textarea
+                    className="form-textarea"
+                    value={customerDetails.additionalInfo}
+                    onChange={(e) => handleInputChange('additionalInfo', e.target.value)}
+                    placeholder="Any special delivery instructions, preferred time, etc."
+                    rows="3"
+                  />
+                </div>
+
+                {/* Action Buttons for Returning Users */}
+                <div className="action-buttons-group">
+                  <button
+                    className="whatsapp-button primary"
+                    onClick={handleDirectWhatsApp}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="button-spinner"></div>
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <MessageSquare size={20} />
+                        Send to WhatsApp
+                      </>
+                    )}
+                  </button>
+                  
+                  <button
+                    className="edit-button secondary"
+                    onClick={handleEditDetails}
+                  >
+                    <Edit size={16} />
+                    Edit Details
+                  </button>
+                  
+                  <button
+                    className="clear-button danger"
+                    onClick={handleClearDetails}
+                  >
+                    Clear Saved Details
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Form for New Users or Editing
+              <form className="customer-form" onSubmit={showEditForm ? handleUpdateDetails : handleSubmit}>
+                {/* Personal Information */}
+                <div className="form-section">
+                  <div className="form-section-header">
+                    <User size={20} />
+                    <span>Personal Information</span>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Full Name *</label>
+                    <input
+                      type="text"
+                      className={`form-input ${errors.name ? 'error' : ''}`}
+                      value={customerDetails.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                      placeholder="Enter your full name"
+                    />
+                    {errors.name && <span className="error-text">{errors.name}</span>}
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Phone Number *</label>
+                      <div className="input-with-icon">
+                        <Phone size={18} />
+                        <input
+                          type="tel"
+                          className={`form-input ${errors.phone ? 'error' : ''}`}
+                          value={customerDetails.phone}
+                          onChange={(e) => handleInputChange('phone', e.target.value)}
+                          placeholder="10-digit mobile number"
+                        />
+                      </div>
+                      {errors.phone && <span className="error-text">{errors.phone}</span>}
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Email Address *</label>
+                      <div className="input-with-icon">
+                        <Mail size={18} />
+                        <input
+                          type="email"
+                          className={`form-input ${errors.email ? 'error' : ''}`}
+                          value={customerDetails.email}
+                          onChange={(e) => handleInputChange('email', e.target.value)}
+                          placeholder="your.email@example.com"
+                        />
+                      </div>
+                      {errors.email && <span className="error-text">{errors.email}</span>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Delivery Address */}
+                <div className="form-section">
+                  <div className="form-section-header">
+                    <MapPin size={20} />
+                    <span>Delivery Address</span>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Street Address *</label>
+                    <textarea
+                      className={`form-textarea ${errors.address ? 'error' : ''}`}
+                      value={customerDetails.address}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      placeholder="House/Flat no, Building name, Street, Area"
+                      rows="3"
+                    />
+                    {errors.address && <span className="error-text">{errors.address}</span>}
+                  </div>
+
+                  <div className="form-row three-col">
+                    <div className="form-group">
+                      <label className="form-label">City *</label>
+                      <input
+                        type="text"
+                        className={`form-input ${errors.city ? 'error' : ''}`}
+                        value={customerDetails.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                        placeholder="City"
+                      />
+                      {errors.city && <span className="error-text">{errors.city}</span>}
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">State *</label>
+                      <input
+                        type="text"
+                        className={`form-input ${errors.state ? 'error' : ''}`}
+                        value={customerDetails.state}
+                        onChange={(e) => handleInputChange('state', e.target.value)}
+                        placeholder="State"
+                      />
+                      {errors.state && <span className="error-text">{errors.state}</span>}
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Pincode *</label>
+                      <input
+                        type="text"
+                        className={`form-input ${errors.pincode ? 'error' : ''}`}
+                        value={customerDetails.pincode}
+                        onChange={(e) => handleInputChange('pincode', e.target.value)}
+                        placeholder="6-digit pincode"
+                      />
+                      {errors.pincode && <span className="error-text">{errors.pincode}</span>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Information */}
+                <div className="form-section">
+                  <div className="form-section-header">
+                    <MessageSquare size={20} />
+                    <span>Additional Information (Optional)</span>
+                  </div>
+                  <textarea
+                    className="form-textarea"
+                    value={customerDetails.additionalInfo}
+                    onChange={(e) => handleInputChange('additionalInfo', e.target.value)}
+                    placeholder="Any special delivery instructions, preferred time, etc."
+                    rows="3"
+                  />
+                </div>
+
+                {/* Submit Buttons */}
+                <div className="form-submit-group">
+                  <button
+                    type="submit"
+                    className="whatsapp-button primary"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="button-spinner"></div>
+                        {showEditForm ? 'Updating...' : 'Processing...'}
+                      </>
+                    ) : (
+                      <>
+                        <MessageSquare size={20} />
+                        {showEditForm ? 'Update & Send to WhatsApp' : 'Send to WhatsApp'}
+                      </>
+                    )}
+                  </button>
+
+                  {showEditForm && (
+                    <button
+                      type="button"
+                      className="edit-button secondary"
+                      onClick={() => setShowEditForm(false)}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
