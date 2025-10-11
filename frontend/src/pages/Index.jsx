@@ -11,7 +11,8 @@ import {
   ShoppingBag,
   Clock,
   Tag,
-  X
+  X,
+  Zap
 } from 'lucide-react';
 import './styles.css';
 
@@ -22,6 +23,7 @@ export default function HomePage() {
   const [products, setProducts] = useState([]);
   const [bestSellers, setBestSellers] = useState([]);
   const [trendingProducts, setTrendingProducts] = useState([]);
+  const [flashDeals, setFlashDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [wishlist, setWishlist] = useState([]);
   const [showCookieConsent, setShowCookieConsent] = useState(false);
@@ -79,6 +81,10 @@ export default function HomePage() {
           // Filter trending products
           const trending = transformedProducts.filter(p => p.isTrending);
           setTrendingProducts(trending.length > 0 ? trending : transformedProducts.slice(0, 8));
+          
+          // Set flash deals (products with highest discount)
+          const sortedByDiscount = [...transformedProducts].sort((a, b) => b.discount - a.discount);
+          setFlashDeals(sortedByDiscount.slice(0, 10));
         }
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -87,6 +93,7 @@ export default function HomePage() {
         setProducts(mockProducts);
         setBestSellers(mockProducts.slice(0, 8));
         setTrendingProducts(mockProducts.slice(8, 16));
+        setFlashDeals(mockProducts.slice(0, 10));
       } finally {
         setLoading(false);
       }
@@ -263,6 +270,41 @@ export default function HomePage() {
     </div>
   );
 
+  // Mobile Flash Deal Card Component
+  const MobileFlashDealCard = ({ product }) => (
+    <div className="mobile-flash-card" onClick={() => handleProductClick(product.id)}>
+      <div className="mobile-flash-image-wrapper">
+        <img 
+          src={product.images[0]} 
+          alt={product.name}
+          className="mobile-flash-image"
+          loading="lazy"
+        />
+        <div className="mobile-flash-discount">
+          <Zap size={12} />
+          {product.discount}%
+        </div>
+        <button
+          className={`mobile-flash-wishlist ${wishlist.includes(product.id) ? 'active' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleWishlist(product.id);
+          }}
+          aria-label="Add to wishlist"
+        >
+          <Heart size={12} fill={wishlist.includes(product.id) ? 'currentColor' : 'none'} />
+        </button>
+      </div>
+      <div className="mobile-flash-content">
+        <h4 className="mobile-flash-title">{product.name}</h4>
+        <div className="mobile-flash-price">
+          <span className="mobile-flash-current">₹{product.price.toLocaleString()}</span>
+          <span className="mobile-flash-original">₹{product.originalPrice.toLocaleString()}</span>
+        </div>
+      </div>
+    </div>
+  );
+
   // Section Header Component
   const SectionHeader = ({ title, subtitle, showViewAll, onViewAll }) => (
     <div className="section-header">
@@ -390,7 +432,7 @@ export default function HomePage() {
           title="Best Sellers"
           subtitle="Most loved by our customers"
           showViewAll={true}
-          onViewAll={() => navigate('/best-sellers')}
+          onViewAll={() => handleCategoryClick('shirts')}
         />
         
         {loading ? (
@@ -405,6 +447,28 @@ export default function HomePage() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Mobile-Only Flash Deals Section */}
+      <section className="mobile-flash-deals-section">
+        <div className="mobile-flash-header">
+          <div className="mobile-flash-title-wrapper">
+            <Zap size={24} className="mobile-flash-icon" />
+            <div>
+              <h2 className="mobile-flash-section-title">Flash Deals</h2>
+              <p className="mobile-flash-section-subtitle">Limited time offers</p>
+            </div>
+          </div>
+          <button className="mobile-flash-view-all" onClick={() => handleCategoryClick('trending')}>
+            View All
+          </button>
+        </div>
+        
+        <div className="mobile-flash-scroll-container">
+          {flashDeals.map((product) => (
+            <MobileFlashDealCard key={product.id} product={product} />
+          ))}
+        </div>
       </section>
 
       {/* Offer Section */}
@@ -429,7 +493,7 @@ export default function HomePage() {
           title="Trending Now"
           subtitle="What's hot this season"
           showViewAll={true}
-          onViewAll={() => navigate('/trending')}
+          onViewAll={() => handleCategoryClick('shirts')}
         />
         
         <div className="product-grid">

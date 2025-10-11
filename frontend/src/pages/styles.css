@@ -243,9 +243,10 @@ background: white;
 }
 .categories-grid {
 display: grid;
-grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-gap: 24px;
+grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+gap: 20px;
 }
+
 .category-card {
 background: white;
 border-radius: 12px;
@@ -256,40 +257,46 @@ cursor: pointer;
 border: 2px solid transparent;
 position: relative;
 }
+
 .category-card:hover {
 transform: translateY(-6px);
 box-shadow: var(--shadow-xl);
 border-color: var(--primary-color);
 }
+
 .category-image-container {
 position: relative;
 overflow: hidden;
-height: 220px;
+height: 160px;
 background: var(--bg-tertiary);
 }
+
 .category-image {
 width: 100%;
 height: 100%;
 object-fit: cover;
 transition: transform 0.5s ease;
 }
+
 .category-card:hover .category-image {
 transform: scale(1.1);
 }
+
 .category-tag {
 position: absolute;
-top: 12px;
-right: 12px;
+top: 10px;
+right: 10px;
 background: var(--accent-color);
 color: var(--secondary-dark);
-padding: 6px 12px;
-border-radius: 8px;
-font-size: 0.75rem;
+padding: 4px 10px;
+border-radius: 6px;
+font-size: 0.7rem;
 font-weight: 700;
 text-transform: uppercase;
 letter-spacing: 0.5px;
 box-shadow: var(--shadow-md);
 }
+
 .category-overlay {
 position: absolute;
 top: 0;
@@ -300,35 +307,40 @@ background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent);
 display: flex;
 align-items: flex-end;
 justify-content: center;
-padding: 20px;
+padding: 16px;
 opacity: 0;
 transition: opacity var(--transition-normal);
 }
+
 .category-card:hover .category-overlay {
 opacity: 1;
 }
+
 .category-cta {
 background: white;
 color: var(--primary-color);
-padding: 12px 28px;
+padding: 10px 24px;
 border-radius: 9999px;
 font-weight: 700;
-font-size: 0.95rem;
+font-size: 0.9rem;
 box-shadow: var(--shadow-lg);
 }
+
 .category-content {
-padding: 20px;
+padding: 14px;
 text-align: center;
 }
+
 .category-name {
 font-family: 'Poppins', sans-serif;
-font-size: 1.4rem;
+font-size: 1.1rem;
 font-weight: 700;
 color: var(--text-primary);
-margin-bottom: 8px;
+margin-bottom: 6px;
 }
+
 .category-description {
-font-size: 0.95rem;
+font-size: 0.85rem;
 color: var(--text-secondary);
 }
 .product-section {
@@ -878,18 +890,28 @@ transform: translateY(0);
 --section-padding: 50px 20px;
 }
 .product-grid {
-grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 gap: 18px;
 }
 .categories-grid {
-grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-gap: 20px;
+grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+gap: 16px;
+}
+.category-image-container {
+height: 140px;
+}
+.category-content {
+padding: 12px;
+}
+.category-name {
+font-size: 1rem;
 }
 .features-banner-grid {
 grid-template-columns: repeat(2, 1fr);
 gap: 20px;
 }
 }
+
 @media (max-width: 768px) {
 :root {
 --section-padding: var(--section-padding-mobile);
@@ -924,19 +946,19 @@ align-items: flex-start;
 }
 .categories-grid {
 grid-template-columns: repeat(2, 1fr);
-gap: 16px;
+gap: 12px;
 }
 .category-image-container {
-height: 180px;
+height: 130px;
 }
 .category-content {
-padding: 16px;
+padding: 10px;
 }
 .category-name {
-font-size: 1.2rem;
+font-size: 0.95rem;
 }
 .category-description {
-font-size: 0.85rem;
+font-size: 0.75rem;
 }
 .product-grid {
 grid-template-columns: repeat(2, 1fr);
@@ -1009,6 +1031,7 @@ justify-content: stretch;
 flex: 1;
 }
 }
+
 @media (max-width: 480px) {
 .hero-section {
 height: 55vh;
@@ -1040,10 +1063,19 @@ padding: 9px;
 font-size: 0.8rem;
 }
 .categories-grid {
-gap: 12px;
+gap: 10px;
 }
 .category-image-container {
-height: 160px;
+height: 120px;
+}
+.category-content {
+padding: 8px;
+}
+.category-name {
+font-size: 0.9rem;
+}
+.category-description {
+font-size: 0.7rem;
 }
 .stats-grid {
 grid-template-columns: 1fr;
@@ -1054,6 +1086,7 @@ width: 100%;
 justify-content: center;
 }
 }
+
 @media (max-width: 360px) {
 .product-grid {
 gap: 8px;
@@ -1077,7 +1110,10 @@ padding: 8px;
 font-size: 0.75rem;
 }
 .category-image-container {
-height: 140px;
+height: 110px;
+}
+.category-content {
+padding: 6px;
 }
 }
 ::-webkit-scrollbar {
@@ -1133,4 +1169,213 @@ display: none;
 .category-card {
 page-break-inside: avoid;
 }
+}
+/* Mobile Flash Deals Section - Only visible on mobile */
+.mobile-flash-deals-section {
+  display: none; /* Hidden by default on desktop */
+  padding: 2rem 0;
+  background: var(--bg-primary);
+  max-width: var(--container-max);
+  margin: 0 auto;
+}
+
+.mobile-flash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem 1rem;
+}
+
+.mobile-flash-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mobile-flash-icon {
+  color: var(--accent-color);
+  animation: flashPulse 2s infinite;
+}
+
+@keyframes flashPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+.mobile-flash-section-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+.mobile-flash-section-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.mobile-flash-view-all {
+  background: transparent;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobile-flash-view-all:hover,
+.mobile-flash-view-all:active {
+  background: var(--primary-color);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.mobile-flash-scroll-container {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 0 1rem 1rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+
+.mobile-flash-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.mobile-flash-card {
+  flex: 0 0 160px;
+  scroll-snap-align: start;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+}
+
+.mobile-flash-card:active {
+  transform: scale(0.95);
+  box-shadow: var(--shadow-lg);
+}
+
+.mobile-flash-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.mobile-flash-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.mobile-flash-card:active .mobile-flash-image {
+  transform: scale(1.05);
+}
+
+.mobile-flash-discount {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: var(--accent-color);
+  color: var(--secondary-dark);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  box-shadow: var(--shadow-md);
+}
+
+.mobile-flash-wishlist {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--border-light);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--primary-color);
+  box-shadow: var(--shadow-sm);
+}
+
+.mobile-flash-wishlist:active {
+  transform: scale(0.9);
+}
+
+.mobile-flash-wishlist.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.mobile-flash-content {
+  padding: 0.75rem;
+}
+
+.mobile-flash-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-flash-price {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mobile-flash-current {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mobile-flash-original {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  text-decoration: line-through;
+}
+
+/* Show only on mobile screens */
+@media (max-width: 768px) {
+  .mobile-flash-deals-section {
+    display: block;
+  }
+}
+
+/* Hide completely on tablet and desktop */
+@media (min-width: 769px) {
+  .mobile-flash-deals-section {
+    display: none !important;
+  }
 }

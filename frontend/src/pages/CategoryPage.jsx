@@ -24,6 +24,7 @@ export default function CategoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [addedToCart, setAddedToCart] = useState({});
   const [showSuccess, setShowSuccess] = useState('');
+  const [wishlist, setWishlist] = useState([]);
   const [filters, setFilters] = useState({
     priceRange: [0, 5000],
     sizes: [],
@@ -79,7 +80,7 @@ export default function CategoryPage() {
             sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
             colors: ['Black', 'White', 'Navy', 'Gray', 'Blue'],
             category: name,
-            inStock: true, // Always show as in stock
+            inStock: true,
             brand: product.brand || 'BOLT FIT'
           }));
           
@@ -105,7 +106,7 @@ export default function CategoryPage() {
           sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
           colors: ['Black', 'White', 'Navy', 'Gray', 'Blue'],
           category: name,
-          inStock: true, // Always show as in stock
+          inStock: true,
           brand: 'BOLT FIT'
         }));
         
@@ -169,26 +170,32 @@ export default function CategoryPage() {
     setFilteredProducts(filtered);
   }, [products, searchQuery, filters, sortBy]);
 
+  // Toggle wishlist
+  const toggleWishlist = (productId) => {
+    setWishlist(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
   // Handle Add to Cart
   const handleAddToCart = (product, e) => {
     e.stopPropagation();
     
-    // Add to cart with default selections
     addToCart({
       id: product.id,
       title: product.title,
       price: product.price,
       image: product.images[0],
-      selectedSize: 'M', // Default size
-      selectedColor: product.colors[0], // Default color
+      selectedSize: 'M',
+      selectedColor: product.colors[0],
       quantity: 1
     });
     
-    // Show success feedback
     setAddedToCart(prev => ({ ...prev, [product.id]: true }));
     setShowSuccess(`${product.title} added to cart!`);
     
-    // Reset feedback after 2 seconds
     setTimeout(() => {
       setAddedToCart(prev => ({ ...prev, [product.id]: false }));
       setShowSuccess('');
@@ -204,61 +211,143 @@ export default function CategoryPage() {
   ];
 
   // Product Card Component
- // Product Card Component - SIMPLIFIED
- const ProductCard = ({ product }) => (
-  <div className="product-card" onClick={() => navigate(`/product/${product.id}`)}>
-    <div className="product-image-wrapper">
-      <img 
-        src={product.images[0]} 
-        alt={product.title} 
-        className="product-image"
-        loading="lazy"
-      />
+  const ProductCard = ({ product }) => (
+    <div className="product-card" onClick={() => navigate(`/product/${product.id}`)}>
+      <div className="product-image-wrapper">
+        <img 
+          src={product.images[0]} 
+          alt={product.title} 
+          className="product-image"
+          loading="lazy"
+        />
+        
+        {product.discount > 0 && (
+          <div className="discount-badge">-{product.discount}%</div>
+        )}
+        
+        <button 
+          className={`wishlist-btn ${wishlist.includes(product.id) ? 'active' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleWishlist(product.id);
+          }}
+        >
+          <Heart 
+            className="icon-sm" 
+            fill={wishlist.includes(product.id) ? 'currentColor' : 'none'}
+          />
+        </button>
+      </div>
       
-      {product.discount > 0 && (
-        <div className="discount-badge">-{product.discount}%</div>
-      )}
-      
-      <button 
-        className="wishlist-btn"
-        onClick={(e) => {
-          e.stopPropagation();
-          console.log('Added to wishlist:', product.id);
-        }}
-      >
-        <Heart className="icon-sm" />
-      </button>
-    </div>
-    
-    <div className="product-content">
-      <h3 className="product-title">{product.title}</h3>
-      
-      <div className="product-price">
+      <div className="product-content">
+        <h3 className="product-title">{product.title}</h3>
+        
+        <div className="product-price">
           <span className="current-price">₹{product.price.toLocaleString()}</span>
           <span className="original-price">₹{product.originalPrice.toLocaleString()}</span>
           <span className="save-badge">Save ₹{(product.originalPrice - product.price).toLocaleString()}</span>
+        </div>
+        
+        <button 
+          className={`add-to-cart-btn ${addedToCart[product.id] ? 'added' : ''}`}
+          onClick={(e) => handleAddToCart(product, e)}
+        >
+          {addedToCart[product.id] ? (
+            <>
+              <Check className="icon-sm" />
+              Added
+            </>
+          ) : (
+            <>
+              <ShoppingBag className="icon-sm" />
+              Add to Cart
+            </>
+          )}
+        </button>
       </div>
-      
-      <button 
-        className={`add-to-cart-btn ${addedToCart[product.id] ? 'added' : ''}`}
-        onClick={(e) => handleAddToCart(product, e)}
-      >
-        {addedToCart[product.id] ? (
-          <>
-            <Check className="icon-sm" />
-            Added
-          </>
-        ) : (
-          <>
-            <ShoppingBag className="icon-sm" />
-            Add to Cart
-          </>
-        )}
-      </button>
     </div>
-  </div>
-);
+  );
 
+  // Mobile Flash Deal Card Component
+  const MobileFlashDealCard = ({ product }) => (
+    <div className="mobile-flash-card" onClick={() => navigate(`/product/${product.id}`)}>
+      <div className="mobile-flash-image-wrapper">
+        <img 
+          src={product.images[0]} 
+          alt={product.title}
+          className="mobile-flash-image"
+          loading="lazy"
+        />
+        <div className="mobile-flash-discount">
+          <Zap size={14} />
+          {product.discount}%
+        </div>
+        <button
+          className={`mobile-flash-wishlist ${wishlist.includes(product.id) ? 'active' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleWishlist(product.id);
+          }}
+          aria-label="Add to wishlist"
+        >
+          <Heart size={14} fill={wishlist.includes(product.id) ? 'currentColor' : 'none'} />
+        </button>
+      </div>
+      <div className="mobile-flash-content">
+        <h4 className="mobile-flash-title">{product.title}</h4>
+        <div className="mobile-flash-price">
+          <span className="mobile-flash-current">₹{product.price.toLocaleString()}</span>
+          <span className="mobile-flash-original">₹{product.originalPrice.toLocaleString()}</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Render products with scrollable sections inserted
+  const renderProductsWithScrollableSections = () => {
+    const elements = [];
+    const itemsPerRow = 2; // 2 columns in mobile grid
+    const rowsBeforeScroll = 3; // Show scrollable section after every 3 rows (6 products)
+    const productsBeforeScroll = itemsPerRow * rowsBeforeScroll;
+
+    for (let i = 0; i < filteredProducts.length; i++) {
+      elements.push(
+        <ProductCard key={filteredProducts[i].id} product={filteredProducts[i]} />
+      );
+
+      // Insert scrollable section after every 6 products (3 rows) on mobile
+      if (isMobile && (i + 1) % productsBeforeScroll === 0 && i < filteredProducts.length - 1) {
+        const scrollProducts = filteredProducts.slice(
+          Math.max(0, i - 10),
+          Math.min(filteredProducts.length, i + 10)
+        );
+        
+        elements.push(
+          <div key={`scroll-${i}`} className="mobile-scroll-section-wrapper">
+            <div className="mobile-flash-deals-section">
+              <div className="mobile-flash-header">
+                <div className="mobile-flash-title-wrapper">
+                  <Zap size={20} className="mobile-flash-icon" />
+                  <div>
+                    <h3 className="mobile-flash-section-title">Hot Deals</h3>
+                    <p className="mobile-flash-section-subtitle">Swipe to explore more</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mobile-flash-scroll-container">
+                {scrollProducts.map((product) => (
+                  <MobileFlashDealCard key={`scroll-${product.id}`} product={product} />
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
+
+    return elements;
+  };
 
   // Filter Modal Component
   const FilterModal = () => (
@@ -488,9 +577,7 @@ export default function CategoryPage() {
         ) : (
           <>
             <div className={`products-grid ${viewMode}`}>
-              {filteredProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+              {renderProductsWithScrollableSections()}
               
               {/* Marketing Section */}
               {filteredProducts.length >= 8 && (
