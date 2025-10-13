@@ -478,6 +478,43 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
+          {/* Quantity Selection */}
+          <div className="pdp-variant-section">
+            <div className="pdp-variant-header">
+              <span className="pdp-variant-label">Quantity</span>
+            </div>
+            <div className="pdp-quantity-selector">
+              <button 
+                className="pdp-quantity-btn"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                disabled={quantity <= 1}
+              >
+                <Minus size={16} />
+              </button>
+              <input 
+                type="number" 
+                className="pdp-quantity-input"
+                value={quantity}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 1;
+                  setQuantity(Math.min(Math.max(1, val), getCurrentColorStock()));
+                }}
+                min="1"
+                max={getCurrentColorStock()}
+              />
+              <button 
+                className="pdp-quantity-btn"
+                onClick={() => setQuantity(Math.min(getCurrentColorStock(), quantity + 1))}
+                disabled={quantity >= getCurrentColorStock()}
+              >
+                <Plus size={16} />
+              </button>
+            </div>
+            {quantity >= getCurrentColorStock() && (
+              <span className="pdp-quantity-warning">Maximum stock reached</span>
+            )}
+          </div>
+
           {/* Delivery Check */}
           <div className="pdp-delivery-check">
             <h3 className="pdp-section-heading">Delivery Options</h3>
