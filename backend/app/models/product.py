@@ -16,7 +16,7 @@ class ProductBase(BaseModel):
     description: str = Field(..., min_length=1, max_length=2000, description="Product description")
     price: float = Field(gt=0, description="Product price")
     original_price: Optional[float] = Field(None, gt=0, description="Original price (before discount)")
-    categories: List[str] = Field(default_factory=list, description="Product categories (Shirts, Pants, T-Shirts, Trending)")
+    category: str = Field(..., description="Product category (Shirts, Pants, T-Shirts, Trending)")
     images: List[str] = Field(default_factory=list, description="List of image URLs")
     sizes: List[ProductSize] = Field(default_factory=list, description="Available sizes and stock")
     colors: List[ProductColor] = Field(default_factory=list, description="Available colors")
@@ -25,23 +25,13 @@ class ProductBase(BaseModel):
     is_featured: bool = Field(default=False, description="Whether product is featured")
     is_active: bool = Field(default=True, description="Whether product is active")
 
-    @validator('categories')
-    def validate_categories(cls, v):
-        valid_categories = ["Shirts", "T-Shirts", "Pants", "Trending"]
-        if not v:
-            raise ValueError("At least one category is required")
-        for cat in v:
-            if cat not in valid_categories:
-                raise ValueError(f"Invalid category: {cat}. Must be one of {valid_categories}")
-        return v
-
 # New model for handling form data from frontend
 class ProductCreateForm(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     description: str = Field(..., min_length=1, max_length=2000)
     price: float = Field(gt=0)
     original_price: Optional[float] = Field(None, gt=0)
-    categories: str = Field(..., description="Comma-separated categories (Shirts,T-Shirts,Trending)")
+    category: str
     material: Optional[str] = None
     brand: str = Field(default="BOLT FIT")
     sizes: str = Field(default="", description="Comma-separated sizes (S,M,L,XL)")
@@ -51,14 +41,6 @@ class ProductCreateForm(BaseModel):
 
     def to_product_create(self, image_urls: List[str] = None) -> "ProductCreate":
         """Convert form data to ProductCreate with proper structure"""
-        
-        # Parse categories from comma-separated string
-        category_list = []
-        if self.categories.strip():
-            category_list = [cat.strip() for cat in self.categories.split(',') if cat.strip()]
-        
-        if not category_list:
-            raise ValueError("At least one category is required")
         
         # Parse sizes from comma-separated string
         size_list = []
@@ -89,7 +71,7 @@ class ProductCreateForm(BaseModel):
             description=self.description,
             price=self.price,
             original_price=self.original_price,
-            categories=category_list,
+            category=self.category,
             material=self.material,
             brand=self.brand,
             images=image_urls or [],
@@ -107,7 +89,7 @@ class ProductUpdate(BaseModel):
     description: Optional[str] = Field(None, min_length=1, max_length=2000)
     price: Optional[float] = Field(None, gt=0)
     original_price: Optional[float] = Field(None, gt=0)
-    categories: Optional[List[str]] = None
+    category: Optional[str] = None
     images: Optional[List[str]] = None
     sizes: Optional[List[ProductSize]] = None
     colors: Optional[List[ProductColor]] = None
@@ -116,24 +98,13 @@ class ProductUpdate(BaseModel):
     is_featured: Optional[bool] = None
     is_active: Optional[bool] = None
 
-    @validator('categories')
-    def validate_categories(cls, v):
-        if v is not None:
-            valid_categories = ["Shirts", "T-Shirts", "Pants", "Trending"]
-            if not v:
-                raise ValueError("At least one category is required")
-            for cat in v:
-                if cat not in valid_categories:
-                    raise ValueError(f"Invalid category: {cat}. Must be one of {valid_categories}")
-        return v
-
 class ProductUpdateForm(BaseModel):
     """Form-friendly update model"""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = Field(None, min_length=1, max_length=2000)
     price: Optional[float] = Field(None, gt=0)
     original_price: Optional[float] = Field(None, gt=0)
-    categories: Optional[str] = Field(None, description="Comma-separated categories")
+    category: Optional[str] = None
     material: Optional[str] = None
     brand: Optional[str] = None
     sizes: Optional[str] = Field(None, description="Comma-separated sizes")
@@ -146,7 +117,7 @@ class ProductUpdateForm(BaseModel):
         update_data = {}
         
         # Basic fields
-        for field in ['name', 'description', 'price', 'original_price', 'material', 'brand', 'is_featured', 'is_active']:
+        for field in ['name', 'description', 'price', 'original_price', 'category', 'material', 'brand', 'is_featured', 'is_active']:
             value = getattr(self, field)
             if value is not None:
                 update_data[field] = value
@@ -154,14 +125,6 @@ class ProductUpdateForm(BaseModel):
         # Handle images
         if image_urls is not None:
             update_data['images'] = image_urls
-        
-        # Handle categories
-        if self.categories is not None:
-            category_list = []
-            if self.categories.strip():
-                category_list = [cat.strip() for cat in self.categories.split(',') if cat.strip()]
-            if category_list:
-                update_data['categories'] = category_list
             
         # Handle sizes
         if self.sizes is not None:
