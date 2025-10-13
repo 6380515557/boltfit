@@ -204,6 +204,11 @@ export default function HomePage() {
     navigate(`/product/${productId}`);
   };
 
+  // Navigate to trending category
+  const handleShopNowClick = () => {
+    navigate('/category/trending');
+  };
+
   // Product Card Component with enhanced design
   const ProductCard = ({ product }) => (
     <div className="product-card" onClick={() => handleProductClick(product.id)}>
@@ -349,7 +354,7 @@ export default function HomePage() {
             <p className="hero-description">
               Premium activewear designed for the bold and unstoppable
             </p>
-            <button className="hero-cta">
+            <button className="hero-cta" onClick={handleShopNowClick}>
               Shop Now
               <ChevronRight size={24} />
             </button>
@@ -480,7 +485,7 @@ export default function HomePage() {
             Shop any 2 products and get the 3rd absolutely free. Use code:
             <strong> BOLD3FREE</strong>
           </p>
-          <button className="offer-cta">
+          <button className="offer-cta" onClick={handleShopNowClick}>
             <Tag size={20} />
             Shop Now
           </button>
@@ -493,7 +498,7 @@ export default function HomePage() {
           title="Trending Now"
           subtitle="What's hot this season"
           showViewAll={true}
-          onViewAll={() => handleCategoryClick('shirts')}
+          onViewAll={() => handleCategoryClick('trending')}
         />
         
         <div className="product-grid">
@@ -532,11 +537,11 @@ export default function HomePage() {
       <section className="stats-section">
         <div className="stats-grid">
           <div className="stat-item">
-            <div className="stat-number">10M+</div>
+            <div className="stat-number">100+</div>
             <div className="stat-label">Products Sold</div>
           </div>
           <div className="stat-item">
-            <div className="stat-number">500K+</div>
+            <div className="stat-number">500+</div>
             <div className="stat-label">Happy Customers</div>
           </div>
           <div className="stat-item">

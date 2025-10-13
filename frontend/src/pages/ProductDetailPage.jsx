@@ -25,10 +25,11 @@ export default function ProductDetailPage() {
   const [showSuccess, setShowSuccess] = useState('');
   const [feedback, setFeedback] = useState({ rating: 0, comment: '', name: '' });
   const [relatedProducts, setRelatedProducts] = useState([]);
-  const [categoryProducts, setCategoryProducts] = useState([]);
+  const [allCategoryProducts, setAllCategoryProducts] = useState([]);
   const [activeTab, setActiveTab] = useState('description');
   const [pincode, setPincode] = useState('');
   const [deliveryInfo, setDeliveryInfo] = useState(null);
+  const [categoryLoading, setCategoryLoading] = useState(false);
 
   const shopInfo = {
     name: "PRESTIGE COLLECTION",
@@ -97,8 +98,10 @@ export default function ProductDetailPage() {
       setSelectedSize('M');
       setSelectedColor(transformedProduct.colors[0].name);
 
-      // Fetch related products
+      // Fetch related products for horizontal scroll
       fetchRelatedProducts(transformedProduct.category);
+      // Fetch all category products
+      fetchAllCategoryProducts(transformedProduct.category);
 
     } catch (err) {
       console.error('Fetch error:', err);
@@ -123,6 +126,7 @@ export default function ProductDetailPage() {
         setMainImage(fallback.images[0]);
         setSelectedSize('M');
         setSelectedColor('Black');
+        fetchAllCategoryProducts('Shirts');
       }
     } finally {
       setLoading(false);
@@ -149,23 +153,9 @@ export default function ProductDetailPage() {
             : 20
         }));
         setRelatedProducts(transformed);
-
-        // Get more products for category section
-        setCategoryProducts(data.products.slice(6, 18).map((p, i) => ({
-          id: p.id,
-          title: p.name,
-          price: p.price,
-          originalPrice: p.original_price || (p.price + 200),
-          image: p.images?.[0] || `https://images.unsplash.com/photo-${1530000000000 + i}?w=300`,
-          rating: (Math.random() * 1.5 + 3.5).toFixed(1),
-          discount: p.original_price 
-            ? Math.round(((p.original_price - p.price) / p.original_price) * 100)
-            : 20
-        })));
       }
     } catch (err) {
       console.error('Error fetching related products:', err);
-      // Generate fallback products
       const mockProducts = Array.from({ length: 6 }, (_, i) => ({
         id: `related-${i + 1}`,
         title: `Premium ${category} ${i + 1}`,
@@ -176,22 +166,60 @@ export default function ProductDetailPage() {
         discount: Math.floor(Math.random() * 40) + 15
       }));
       setRelatedProducts(mockProducts);
+    }
+  };
 
-      const moreMock = Array.from({ length: 12 }, (_, i) => ({
+  const fetchAllCategoryProducts = async (category) => {
+    try {
+      setCategoryLoading(true);
+      const response = await fetch(
+        `${API_BASE_URL}/products/?category=${encodeURIComponent(category)}&is_active=true&per_page=100`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        const transformed = data.products
+          .filter(p => p.id !== id) // Exclude current product
+          .map((p, i) => ({
+            id: p.id,
+            title: p.name,
+            price: p.price,
+            originalPrice: p.original_price || (p.price + 200),
+            image: p.images?.[0] || `https://images.unsplash.com/photo-${1530000000000 + i}?w=400`,
+            rating: (Math.random() * 1.5 + 3.5).toFixed(1),
+            reviewsCount: Math.floor(Math.random() * 500) + 25,
+            discount: p.original_price 
+              ? Math.round(((p.original_price - p.price) / p.original_price) * 100)
+              : 20,
+            brand: p.brand || 'BOLT FIT',
+            inStock: true
+          }));
+        setAllCategoryProducts(transformed);
+      }
+    } catch (err) {
+      console.error('Error fetching all category products:', err);
+      // Generate fallback products
+      const moreMock = Array.from({ length: 20 }, (_, i) => ({
         id: `category-${i + 1}`,
         title: `${category} Collection ${i + 1}`,
         price: Math.floor(Math.random() * 2000) + 699,
         originalPrice: Math.floor(Math.random() * 3000) + 1200,
-        image: `https://images.unsplash.com/photo-${1530000000000 + i}?w=300`,
+        image: `https://images.unsplash.com/photo-${1530000000000 + i}?w=400`,
         rating: (Math.random() * 1.5 + 3.5).toFixed(1),
-        discount: Math.floor(Math.random() * 40) + 15
+        reviewsCount: Math.floor(Math.random() * 500) + 25,
+        discount: Math.floor(Math.random() * 40) + 15,
+        brand: 'BOLT FIT',
+        inStock: true
       }));
-      setCategoryProducts(moreMock);
+      setAllCategoryProducts(moreMock);
+    } finally {
+      setCategoryLoading(false);
     }
   };
 
   useEffect(() => {
     fetchProduct();
+    window.scrollTo(0, 0);
   }, [id]);
 
   const { addToCart } = useCart();
@@ -689,44 +717,107 @@ export default function ProductDetailPage() {
         </div>
       )}
 
-      {/* More from Category - Grid */}
-      {categoryProducts.length > 0 && (
-        <div className="pdp-category-section">
-          <div className="pdp-category-header">
-            <h2>More from {product.category}</h2>
-            <button className="pdp-view-all" onClick={() => navigate(`/category/${product.category}`)}>
-              View All <ChevronRight size={16} />
-            </button>
+      {/* All Category Products - Full Grid */}
+      {allCategoryProducts.length > 0 && (
+        <div className="pdp-all-category-section">
+          <div className="pdp-all-category-header">
+            <div>
+              <h2>All Products in {product.category}</h2>
+              <p className="pdp-all-category-subtitle">
+                Explore our complete collection of {allCategoryProducts.length} products
+              </p>
+            </div>
           </div>
-          <div className="pdp-category-grid">
-            {categoryProducts.map((item) => (
-              <div
-                key={item.id}
-                className="pdp-category-card"
-                onClick={() => navigate(`/product/${item.id}`)}
-              >
-                <div className="pdp-category-image">
-                  <img src={item.image} alt={item.title} />
-                  {item.discount > 0 && (
-                    <span className="pdp-category-discount">{item.discount}% OFF</span>
-                  )}
-                  <button className="pdp-category-wishlist">
-                    <Heart size={16} />
-                  </button>
-                </div>
-                <div className="pdp-category-info">
-                  <h4>{item.title}</h4>
-                  <div className="pdp-category-rating">
-                    <span className="pdp-category-rating-num">{item.rating}</span>
-                    <Star size={12} fill="#FFB800" color="#FFB800" />
+
+          {categoryLoading ? (
+            <div className="pdp-category-loading">
+              <div className="pdp-spinner"></div>
+              <p>Loading more products...</p>
+            </div>
+          ) : (
+            <div className="pdp-all-category-grid">
+              {allCategoryProducts.map((item) => (
+                <div
+                  key={item.id}
+                  className="pdp-all-category-card"
+                  onClick={() => {
+                    navigate(`/product/${item.id}`);
+                    window.scrollTo(0, 0);
+                  }}
+                >
+                  <div className="pdp-all-category-image">
+                    <img src={item.image} alt={item.title} loading="lazy" />
+                    {item.discount > 0 && (
+                      <span className="pdp-all-category-discount">{item.discount}% OFF</span>
+                    )}
+                    <button 
+                      className="pdp-all-category-wishlist"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsWishlisted(!isWishlisted);
+                      }}
+                    >
+                      <Heart size={18} />
+                    </button>
                   </div>
-                  <div className="pdp-category-price">
-                    <span className="pdp-category-current">₹{item.price.toLocaleString()}</span>
-                    <span className="pdp-category-original">₹{item.originalPrice.toLocaleString()}</span>
+                  
+                  <div className="pdp-all-category-info">
+                    <div className="pdp-all-category-brand">{item.brand}</div>
+                    <h4 className="pdp-all-category-title">{item.title}</h4>
+                    
+                    <div className="pdp-all-category-rating">
+                      <div className="pdp-all-category-rating-badge">
+                        <span>{item.rating}</span>
+                        <Star size={12} fill="#FFB800" color="#FFB800" />
+                      </div>
+                      <span className="pdp-all-category-reviews">
+                        ({item.reviewsCount?.toLocaleString() || 0})
+                      </span>
+                    </div>
+                    
+                    <div className="pdp-all-category-price">
+                      <span className="pdp-all-category-current">₹{item.price.toLocaleString()}</span>
+                      <span className="pdp-all-category-original">₹{item.originalPrice.toLocaleString()}</span>
+                    </div>
+                    
+                    <div className="pdp-all-category-save">
+                      Save ₹{(item.originalPrice - item.price).toLocaleString()}
+                    </div>
+                    
+                    <button 
+                      className="pdp-all-category-add-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart({
+                          id: item.id,
+                          title: item.title,
+                          price: item.price,
+                          image: item.image,
+                          selectedSize: 'M',
+                          selectedColor: 'Black',
+                          quantity: 1
+                        });
+                        setShowSuccess(`${item.title} added to cart!`);
+                        setTimeout(() => setShowSuccess(''), 2000);
+                      }}
+                    >
+                      <ShoppingCart size={16} />
+                      Add to Cart
+                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+          
+          <div className="pdp-all-category-footer">
+            <button 
+              className="pdp-view-all-category-btn"
+              onClick={() => navigate(`/category/${product.category}`)}
+            >
+              View All {product.category} Products
+              <ChevronRight size={18} />
+            </button>
           </div>
         </div>
       )}
