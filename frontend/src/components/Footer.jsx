@@ -163,17 +163,6 @@ export default function Footer() {
           )}
         </div>
       </section>
-
-      {showBackToTop && (
-        <button 
-          className="bf-back-to-top" 
-          onClick={scrollToTop} 
-          aria-label="Back to Top"
-          title="Back to Top"
-        >
-          <ArrowUp size={28} />
-        </button>
-      )}
     </footer>
   );
 }
