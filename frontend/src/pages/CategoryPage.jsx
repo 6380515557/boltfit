@@ -57,13 +57,38 @@ export default function CategoryPage() {
         const categoryName = categoryMap[name.toLowerCase()] || 
           name.charAt(0).toUpperCase() + name.slice(1);
         
-        const response = await fetch(
-          `${API_BASE_URL}/products/?category=${encodeURIComponent(categoryName)}&is_active=true&per_page=50`
-        );
+        // For trending category, fetch all products from multiple categories
+        let allProducts = [];
         
-        if (response.ok) {
-          const data = await response.json();
-          const transformedProducts = data.products.map((product, i) => ({
+        if (name.toLowerCase() === 'trending') {
+          // Fetch from all categories
+          const categories = ['Shirts', 'Pants', 'T-Shirts'];
+          const fetchPromises = categories.map(cat =>
+            fetch(`${API_BASE_URL}/products/?category=${encodeURIComponent(cat)}&is_active=true&per_page=50`)
+              .then(res => res.ok ? res.json() : null)
+              .catch(() => null)
+          );
+          
+          const results = await Promise.all(fetchPromises);
+          allProducts = results
+            .filter(data => data && data.products)
+            .flatMap(data => data.products);
+        } else {
+          // Fetch single category
+          const response = await fetch(
+            `${API_BASE_URL}/products/?category=${encodeURIComponent(categoryName)}&is_active=true&per_page=50`
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            allProducts = data.products;
+          } else {
+            throw new Error('API failed');
+          }
+        }
+        
+        if (allProducts.length > 0) {
+          const transformedProducts = allProducts.map((product, i) => ({
             id: product.id,
             title: product.name,
             price: product.price,
@@ -87,7 +112,7 @@ export default function CategoryPage() {
           setProducts(transformedProducts);
           setFilteredProducts(transformedProducts);
         } else {
-          throw new Error('API failed');
+          throw new Error('No products found');
         }
       } catch (error) {
         console.error('Error fetching products:', error);

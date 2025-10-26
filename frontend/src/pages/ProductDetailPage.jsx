@@ -39,6 +39,32 @@ export default function ProductDetailPage() {
     features: ["✓ 100% Authentic Products", "✓ 30-Day Return Policy", "✓ Free Shipping Above ₹999", "✓ 24/7 Customer Support"]
   };
 
+  // Helper function to get color hex codes
+  const getColorHex = (colorName) => {
+    const colorMap = {
+      'black': '#000000',
+      'white': '#FFFFFF',
+      'navy': '#1e3a8a',
+      'blue': '#3b82f6',
+      'red': '#ef4444',
+      'green': '#22c55e',
+      'yellow': '#eab308',
+      'brown': '#8b4513',
+      'gray': '#6b7280',
+      'grey': '#6b7280',
+      'pink': '#ec4899',
+      'purple': '#a855f7',
+      'orange': '#f97316',
+      'beige': '#f5f5dc',
+      'maroon': '#800000',
+      'olive': '#808000',
+      'teal': '#008080',
+      'cyan': '#00ffff',
+      'indigo': '#4b0082'
+    };
+    return colorMap[colorName.toLowerCase()] || '#666666';
+  };
+
   const fetchProduct = async () => {
     try {
       setLoading(true);
@@ -59,6 +85,39 @@ export default function ProductDetailPage() {
 
       const apiProduct = await response.json();
 
+      // Transform sizes - only use what backend provides
+      const apiSizes = apiProduct.sizes || apiProduct.available_sizes || [];
+      const productSizes = apiSizes.length > 0 ? apiSizes : ['S', 'M', 'L', 'XL'];
+
+      // Transform colors - only use what backend provides
+      const apiColors = apiProduct.colors || apiProduct.available_colors || [];
+      let productColors = [];
+      
+      if (apiColors.length > 0) {
+        // If backend provides colors array
+        productColors = apiColors.map(color => {
+          if (typeof color === 'string') {
+            // If color is just a string, create object with default hex
+            return {
+              name: color,
+              hex: getColorHex(color),
+              stock: 10
+            };
+          } else if (color.name) {
+            // If color is an object with name
+            return {
+              name: color.name,
+              hex: color.hex || getColorHex(color.name),
+              stock: color.stock || 10
+            };
+          }
+          return null;
+        }).filter(Boolean);
+      } else {
+        // Fallback to single color if no colors provided
+        productColors = [{ name: 'Black', hex: '#000000', stock: 10 }];
+      }
+
       const transformedProduct = {
         id: apiProduct.id || id,
         title: apiProduct.name || 'Premium Classic Collection',
@@ -72,21 +131,15 @@ export default function ProductDetailPage() {
         ],
         description: apiProduct.description || 'Premium quality product with exceptional craftsmanship and timeless design. Perfect for everyday wear with superior comfort.',
         features: apiProduct.features || ['Premium Materials', 'Expert Craftsmanship', 'Lifetime Durability', 'Modern Design'],
-        specifications: [
+        specifications: apiProduct.specifications || [
           { label: 'Material', value: '100% Cotton' },
           { label: 'Fit', value: 'Regular Fit' },
           { label: 'Pattern', value: 'Solid' },
           { label: 'Occasion', value: 'Casual' },
           { label: 'Care', value: 'Machine Wash' }
         ],
-        sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
-        colors: [
-          { name: 'Black', hex: '#000000', stock: 15 },
-          { name: 'Navy', hex: '#1e3a8a', stock: 12 },
-          { name: 'Brown', hex: '#8b4513', stock: 8 },
-          { name: 'Green', hex: '#166534', stock: 5 },
-          { name: 'Gray', hex: '#6b7280', stock: 20 }
-        ],
+        sizes: productSizes,
+        colors: productColors,
         rating: apiProduct.rating || 4.6,
         reviewsCount: apiProduct.reviewsCount || 2847,
         brand: apiProduct.brand || 'PRESTIGE',
@@ -95,8 +148,8 @@ export default function ProductDetailPage() {
 
       setProduct(transformedProduct);
       setMainImage(transformedProduct.images[0]);
-      setSelectedSize('M');
-      setSelectedColor(transformedProduct.colors[0].name);
+      setSelectedSize(productSizes[0] || ''); // Select first available size
+      setSelectedColor(productColors[0]?.name || ''); // Select first available color
 
       // Fetch related products for horizontal scroll
       fetchRelatedProducts(transformedProduct.category);
@@ -116,7 +169,10 @@ export default function ProductDetailPage() {
           { label: 'Material', value: '100% Cotton' },
           { label: 'Fit', value: 'Regular Fit' }
         ],
-        sizes: ['S', 'M', 'L', 'XL'], rating: 4.5, reviewsCount: 156, brand: 'PRESTIGE',
+        sizes: ['S', 'M', 'L', 'XL'], 
+        rating: 4.5, 
+        reviewsCount: 156, 
+        brand: 'PRESTIGE',
         colors: [{ name: 'Black', hex: '#000000', stock: 10 }],
         category: 'Shirts'
       };
@@ -441,15 +497,21 @@ export default function ProductDetailPage() {
               <button className="pdp-size-guide">Size Guide</button>
             </div>
             <div className="pdp-size-grid">
-              {product.sizes.map(size => (
-                <button
-                  key={size}
-                  className={`pdp-size-option ${selectedSize === size ? 'active' : ''}`}
-                  onClick={() => setSelectedSize(size)}
-                >
-                  {size}
-                </button>
-              ))}
+              {product.sizes.map((size, idx) => {
+                // Handle both string sizes and object sizes
+                const sizeValue = typeof size === 'string' ? size : size.size || size.name || 'N/A';
+                const sizeKey = typeof size === 'string' ? size : `${sizeValue}-${idx}`;
+                
+                return (
+                  <button
+                    key={sizeKey}
+                    className={`pdp-size-option ${selectedSize === sizeValue ? 'active' : ''}`}
+                    onClick={() => setSelectedSize(sizeValue)}
+                  >
+                    {sizeValue}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
